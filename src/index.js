@@ -7,7 +7,8 @@ const { startWebServer } = require('./web/server');
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers, // Privileged — ativar no Developer Portal
+    GatewayIntentBits.GuildMembers,    // Privileged — ativar no Developer Portal
+    GatewayIntentBits.GuildMessages,   // Necessário para receber MessageCreate
   ],
   partials: [Partials.GuildMember],
 });
