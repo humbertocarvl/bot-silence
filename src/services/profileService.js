@@ -77,3 +77,32 @@ async function upsertProfileEmbed(guild, discordId, habboUsername) {
 }
 
 module.exports = { upsertProfileEmbed };
+
+/**
+ * Apaga o embed de perfil de um membro do canal de perfis
+ * e remove o registro do bot_config.
+ *
+ * @param {import('discord.js').Guild} guild
+ * @param {string} discordId
+ */
+async function deleteProfileEmbed(guild, discordId) {
+  const channelId = process.env.PROFILES_CHANNEL_ID;
+  if (!channelId) return;
+
+  const channel = guild.channels.cache.get(channelId);
+  const cfg = await query(
+    'SELECT value FROM bot_config WHERE key = $1',
+    [`profile_msg_${discordId}`],
+  );
+
+  if (cfg.rows.length > 0) {
+    if (channel) {
+      await channel.messages.fetch(cfg.rows[0].value)
+        .then(msg => msg.delete())
+        .catch(() => null);
+    }
+    await query('DELETE FROM bot_config WHERE key = $1', [`profile_msg_${discordId}`]);
+  }
+}
+
+module.exports = { upsertProfileEmbed, deleteProfileEmbed };

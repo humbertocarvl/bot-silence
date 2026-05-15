@@ -78,4 +78,20 @@ async function saveVerifiedUser(discordId, habboUsername, habboUniqueId) {
   await query('DELETE FROM verification_pending WHERE discord_id = $1', [discordId]);
 }
 
-module.exports = { createOrUpdateVerification, getPending, getVerifiedUser, saveVerifiedUser };
+/**
+ * Remove o vínculo verificado de um usuário (e qualquer pendente).
+ * Retorna true se havia vínculo, false se não havia.
+ *
+ * @param {string} discordId
+ * @returns {Promise<boolean>}
+ */
+async function removeVerifiedUser(discordId) {
+  const result = await query(
+    'DELETE FROM verified_users WHERE discord_id = $1 RETURNING id',
+    [discordId],
+  );
+  await query('DELETE FROM verification_pending WHERE discord_id = $1', [discordId]);
+  return result.rowCount > 0;
+}
+
+module.exports = { createOrUpdateVerification, getPending, getVerifiedUser, saveVerifiedUser, removeVerifiedUser };
