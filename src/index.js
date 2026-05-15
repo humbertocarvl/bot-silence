@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Partials, Collection } = require('discord.js');
 const { loadEvents } = require('./handlers/eventHandler');
 const { loadCommands } = require('./handlers/commandHandler');
+const { startWebServer } = require('./web/server');
 
 const client = new Client({
   intents: [
@@ -24,3 +25,4 @@ process.on('unhandledRejection', (err) => {
 });
 
 client.login(process.env.DISCORD_TOKEN);
+startWebServer();

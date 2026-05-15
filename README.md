@@ -1,6 +1,6 @@
 # Silence Bot
 
-Bot oficial do servidor **Habbo Hotel BR** no Discord.  
+Bot oficial do servidor **Silence** no Discord.  
 Gerencia o fluxo de entrada de novos membros e realiza a verificação de contas do Habbo Hotel.
 
 ---

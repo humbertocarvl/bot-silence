@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Política de Privacidade — Silence Bot</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f13;
+      color: #dcddde;
+      line-height: 1.7;
+      padding: 2rem 1rem;
+    }
+    .container { max-width: 760px; margin: 0 auto; }
+    header {
+      border-bottom: 1px solid #2e2f35;
+      padding-bottom: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: #5865f2;
+      text-decoration: none;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+    }
+    .back:hover { text-decoration: underline; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: #fff; }
+    .meta { color: #72767d; font-size: 0.875rem; margin-top: 0.4rem; }
+    section { margin-bottom: 2rem; }
+    h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid #2e2f35;
+    }
+    p { color: #b9bbbe; margin-bottom: 0.75rem; }
+    ul { padding-left: 1.5rem; color: #b9bbbe; }
+    ul li { margin-bottom: 0.4rem; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+    th {
+      background: #1e1f24;
+      color: #fff;
+      text-align: left;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid #2e2f35;
+    }
+    td {
+      padding: 0.6rem 0.8rem;
+      border: 1px solid #2e2f35;
+      color: #b9bbbe;
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: #17181d; }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #2e2f35; color: #4f545c; font-size: 0.8rem; text-align: center; }
+    a { color: #5865f2; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <a class="back" href="/">← Voltar</a>
+      <h1>Política de Privacidade</h1>
+      <p class="meta">Silence Bot — Última atualização: 15 de maio de 2026</p>
+    </header>
+
+    <section>
+      <h2>1. Introdução</h2>
+      <p>Esta Política de Privacidade descreve quais dados o Silence Bot coleta, como os utiliza e como os protege. Ao utilizar o Bot, você concorda com as práticas descritas aqui.</p>
+      <p>O Silence Bot não é afiliado à Sulake Corporation nem ao Habbo Hotel. Os dados do Habbo são obtidos exclusivamente por meio da <strong>API pública</strong> disponibilizada em <a href="https://www.habbo.com.br/api/public/api-docs/" target="_blank">habbo.com.br</a>.</p>
+    </section>
+
+    <section>
+      <h2>2. Dados Coletados</h2>
+      <p>Coletamos apenas os dados estritamente necessários para o funcionamento das funcionalidades do Bot:</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Dado</th>
+            <th>Origem</th>
+            <th>Finalidade</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ID do usuário Discord</td>
+            <td>Discord API</td>
+            <td>Identificar o usuário no processo de verificação</td>
+          </tr>
+          <tr>
+            <td>Nome de usuário do Habbo</td>
+            <td>Informado pelo usuário + confirmado via API Habbo</td>
+            <td>Vincular a conta Habbo ao perfil Discord</td>
+          </tr>
+          <tr>
+            <td>ID único do Habbo (uniqueId)</td>
+            <td>API pública do Habbo Hotel BR</td>
+            <td>Identificar de forma única a conta Habbo vinculada</td>
+          </tr>
+          <tr>
+            <td>Data e hora da verificação</td>
+            <td>Gerado internamente</td>
+            <td>Registro de quando a vinculação foi realizada</td>
+          </tr>
+        </tbody>
+      </table>
+      <p><strong>Não coletamos</strong> senhas, e-mails, informações financeiras nem qualquer dado sensível.</p>
+    </section>
+
+    <section>
+      <h2>3. Como os Dados São Usados</h2>
+      <ul>
+        <li>Para realizar e confirmar a vinculação entre sua conta Discord e sua conta Habbo</li>
+        <li>Para atribuir o cargo de verificado no servidor após confirmação</li>
+        <li>Para exibir informações da sua conta Habbo vinculada ao usar comandos como <code>/minhaconta</code></li>
+        <li>Para estatísticas internas do servidor (ex.: total de contas verificadas)</li>
+      </ul>
+      <p>Os dados <strong>não são vendidos, compartilhados nem transferidos</strong> a terceiros.</p>
+    </section>
+
+    <section>
+      <h2>4. Armazenamento e Segurança</h2>
+      <p>Os dados são armazenados em um banco de dados PostgreSQL hospedado na plataforma <a href="https://railway.app" target="_blank">Railway</a>, com conexão criptografada (SSL). O acesso ao banco é restrito ao Bot.</p>
+      <p>Códigos de verificação temporários são armazenados por no máximo <strong>60 minutos</strong> e excluídos automaticamente após o uso ou expiração.</p>
+    </section>
+
+    <section>
+      <h2>5. Dados de Terceiros — API do Habbo</h2>
+      <p>Durante a verificação, o Bot consulta a API pública do Habbo Hotel BR para confirmar a existência do usuário e verificar o campo "Missão" do personagem. Apenas dados disponíveis publicamente na API são acessados. Consulte a <a href="https://www.habbo.com.br" target="_blank">política de privacidade do Habbo</a> para detalhes sobre os dados que eles disponibilizam.</p>
+    </section>
+
+    <section>
+      <h2>6. Seus Direitos</h2>
+      <p>Você pode a qualquer momento:</p>
+      <ul>
+        <li><strong>Solicitar a exclusão</strong> dos seus dados — entre em contato com a administração do servidor</li>
+        <li><strong>Consultar</strong> quais dados estão associados à sua conta usando o comando <code>/minhaconta</code></li>
+      </ul>
+      <p>Após a exclusão, o cargo de verificado será removido e a vinculação desfeita.</p>
+    </section>
+
+    <section>
+      <h2>7. Retenção de Dados</h2>
+      <p>Os dados de verificação são mantidos enquanto o usuário permanecer no servidor ou até que solicite a exclusão. Dados de verificações pendentes (não concluídas) são excluídos automaticamente após 60 minutos.</p>
+    </section>
+
+    <section>
+      <h2>8. Alterações nesta Política</h2>
+      <p>Podemos atualizar esta Política periodicamente. Alterações relevantes serão comunicadas no servidor do Discord. O uso continuado do Bot após as alterações constitui aceitação da nova Política.</p>
+    </section>
+
+    <section>
+      <h2>9. Contato</h2>
+      <p>Para exercer seus direitos ou tirar dúvidas sobre privacidade, entre em contato pela administração do servidor no Discord.</p>
+    </section>
+
+    <footer>Silence Bot &copy; 2026 • <a href="/terms">Termos de Serviço</a></footer>
+  </div>
+</body>
+</html>
