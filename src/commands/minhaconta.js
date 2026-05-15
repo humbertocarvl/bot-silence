@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { getVerifiedUser } = require('../services/verificationService');
-const { getUserByName } = require('../services/habboService');
+const { getUserByName, getAvatarUrl } = require('../services/habboService');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -25,7 +25,12 @@ module.exports = {
     }
 
     const embed = new EmbedBuilder()
+      .setAuthor({
+        name: interaction.member?.displayName ?? interaction.user.username,
+        iconURL: interaction.user.displayAvatarURL({ dynamic: true }),
+      })
       .setTitle(`🏨 ${verified.habbo_username}`)
+      .setThumbnail(getAvatarUrl(verified.habbo_username))
       .addFields(
         {
           name: 'Missão atual',

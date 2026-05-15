@@ -15,6 +15,7 @@ const {
   saveVerifiedUser,
 } = require('../services/verificationService');
 const { getUserByName } = require('../services/habboService');
+const { upsertProfileEmbed } = require('../services/profileService');
 const { query } = require('../database/index');
 
 module.exports = {
@@ -135,6 +136,9 @@ module.exports = {
           await interaction.member.roles.add(role, 'Verificação Habbo concluída');
         }
       }
+
+      // Atualiza o canal de perfis (silenciosamente — não bloqueia a resposta)
+      upsertProfileEmbed(interaction.guild, interaction.user.id, habboUser.name).catch(console.error);
 
       return interaction.editReply({
         content:
