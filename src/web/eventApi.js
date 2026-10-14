@@ -11,6 +11,7 @@ const {
   listRoomVariables,
 } = require('../services/wiredService');
 const { startNewEdition } = require('../services/eventEditionService');
+const { changeGame, setGameStatus } = require('../services/eventGameService');
 
 const router = express.Router();
 
@@ -47,6 +48,24 @@ router.get('/variables', requireSession({ renew: true }), async (_req, res) => {
 router.post('/edition/new', requireSession({ renew: true }), async (req, res) => {
   try {
     const result = await startNewEdition(req.body?.modality);
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    return sendError(res, error);
+  }
+});
+
+router.post('/game/change', requireSession({ renew: true }), async (req, res) => {
+  try {
+    const result = await changeGame(req.body?.game);
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    return sendError(res, error);
+  }
+});
+
+router.post('/game/status', requireSession({ renew: true }), async (req, res) => {
+  try {
+    const result = await setGameStatus(req.body?.running);
     return res.json({ ok: true, ...result });
   } catch (error) {
     return sendError(res, error);

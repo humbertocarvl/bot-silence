@@ -48,6 +48,8 @@ Copie `.env.example` para `.env` e preencha:
 | `HABBO_WIRED_WRITE_KEY` | Chave de escrita Wired (somente Railway) |
 | `WIRED_EDITION_VARIABLE` | Nome da variável global de edição (`edicao`) |
 | `WIRED_MODALITY_VARIABLE` | Nome da variável global de modalidade (`modalidade`) |
+| `WIRED_GAME_VARIABLE` | Nome da variável global que seleciona o jogo (`jogo`) |
+| `WIRED_GAME_STATUS_VARIABLE` | Nome da variável global de início/parada (`status_jogo`) |
 
 ---
 
@@ -94,6 +96,10 @@ comando `/evento` no Discord.
 Na configuração de uma nova edição, o backend lê `edicao`, soma `1` e envia
 `edicao` e `modalidade` juntas em uma única atualização de perfil global. Os
 valores de modalidade são: quarteto `0`, trio `1`, dupla `2` e normal `3`.
+
+O comando **Trocar de jogo** define a variável global `jogo` com os valores de
+`0` a `16`, na ordem documentada no aplicativo. Como o valor é absoluto, essa
+ação usa uma única chamada à API Wired.
 
 ---
 

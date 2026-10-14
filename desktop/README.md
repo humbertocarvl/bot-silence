@@ -13,8 +13,9 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Na primeira tela, informe a URL pública HTTPS do serviço Railway e o código de
-uso único recebido por DM do bot.
+Na primeira tela, informe somente o código de uso único recebido por DM do bot.
+A URL da API já está configurada no aplicativo como
+`https://bot-silence-production.up.railway.app`.
 
 Após autenticar, escolha entre **Nova edição** e **Continuar edição atual**.
 
@@ -27,6 +28,13 @@ atualiza `edicao` e `modalidade` juntas. As modalidades usam estes valores:
 - Normal: `3`
 
 Continuar a edição atual não altera nenhuma variável.
+
+Dentro da edição, **Trocar de jogo** abre a lista de jogos e define diretamente
+o valor da variável global `jogo`. Essa operação usa apenas uma chamada Wired.
+
+O botão **Iniciar jogo** define `status_jogo = 1` e então muda para **Parar
+jogo**, que define `status_jogo = 0`. Ao trocar de jogo, o botão retorna ao
+estado **Iniciar jogo**.
 
 ## Personalização
 

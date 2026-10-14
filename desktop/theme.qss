@@ -98,6 +98,68 @@ QPushButton {
   border-bottom: 4px solid #a66316;
 }
 
+#gameButton {
+  color: #f4f8fb;
+  background-color: #23455d;
+  border: 2px solid #3d6882;
+  border-bottom: 3px solid #0d2230;
+  text-align: left;
+  padding-left: 14px;
+}
+
+#gameButton:hover {
+  color: #251a07;
+  background-color: #ffc43d;
+  border-color: #fff1a8;
+}
+
+#gameStatusButton {
+  color: #eaffed;
+  background-color: #237044;
+  border: 2px solid #62c982;
+  border-bottom: 4px solid #104226;
+}
+
+#gameStatusButton:hover {
+  background-color: #2d8a55;
+}
+
+#gameStatusButton[running="true"] {
+  color: #fff0f0;
+  background-color: #a13a3a;
+  border-color: #ef7777;
+  border-bottom-color: #5d2020;
+}
+
+#gameStatusButton[running="true"]:hover {
+  background-color: #bd4747;
+}
+
+#gameScroll {
+  background: transparent;
+  border: 0;
+}
+
+#scrollContent {
+  background-color: #172736;
+}
+
+QScrollBar:vertical {
+  background: #0f1c27;
+  width: 9px;
+  margin: 0;
+}
+
+QScrollBar::handle:vertical {
+  background: #ffc43d;
+  border-radius: 4px;
+  min-height: 28px;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+  height: 0;
+}
+
 #primaryButton:hover, #commandButton:hover {
   background-color: #ffd968;
 }

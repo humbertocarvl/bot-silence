@@ -1,9 +1,8 @@
 import json
 import sys
 from pathlib import Path
-from urllib.parse import urlparse
 
-from PySide6.QtCore import QByteArray, QObject, QPoint, QSettings, Qt, QTimer, QUrl
+from PySide6.QtCore import QByteArray, QObject, QPoint, Qt, QTimer, QUrl
 from PySide6.QtGui import QCloseEvent, QMouseEvent
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PySide6.QtWidgets import (
@@ -14,6 +13,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMainWindow,
     QPushButton,
+    QScrollArea,
     QStackedWidget,
     QVBoxLayout,
     QWidget,
@@ -25,15 +25,15 @@ def resource_path(name: str) -> Path:
     return base / name
 
 
+API_BASE_URL = "https://bot-silence-production.up.railway.app"
+
+
 class ApiClient(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.network = QNetworkAccessManager(self)
-        self.base_url = ""
+        self.base_url = API_BASE_URL
         self.access_token = ""
-
-    def configure(self, base_url: str):
-        self.base_url = base_url.rstrip("/")
 
     def redeem(self, code: str, callback):
         self._post("/api/evento/auth/redeem", {"code": code}, callback, authenticated=False)
@@ -47,6 +47,12 @@ class ApiClient(QObject):
             {"modality": modality},
             callback,
         )
+
+    def change_game(self, game: int, callback):
+        self._post("/api/evento/game/change", {"game": game}, callback)
+
+    def set_game_status(self, running: bool, callback):
+        self._post("/api/evento/game/status", {"running": running}, callback)
 
     def logout(self, callback=None):
         self._post("/api/evento/logout", {}, callback or (lambda *_: None))
@@ -137,8 +143,8 @@ class SilenceWindow(QMainWindow):
             Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.game_running = False
 
-        self.settings = QSettings("Silence", "EventPanel")
         self.api = ApiClient(self)
         self.heartbeat_timer = QTimer(self)
         self.heartbeat_timer.setInterval(30_000)
@@ -156,10 +162,11 @@ class SilenceWindow(QMainWindow):
         self.pages.addWidget(self.build_edition_setup_page())
         self.pages.addWidget(self.build_modality_page())
         self.pages.addWidget(self.build_control_page())
+        self.pages.addWidget(self.build_game_page())
         shell_layout.addWidget(self.pages)
         self.setCentralWidget(shell)
 
-        self.resize(390, 315)
+        self.resize(390, 270)
 
     def build_login_page(self) -> QWidget:
         page = QWidget()
@@ -178,12 +185,6 @@ class SilenceWindow(QMainWindow):
         subtitle.setWordWrap(True)
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(subtitle)
-
-        self.api_url_input = QLineEdit(
-            self.settings.value("api_url", "https://SEU-SERVICO.up.railway.app")
-        )
-        self.api_url_input.setPlaceholderText("URL do servidor Silence")
-        layout.addWidget(self.api_url_input)
 
         self.code_input = QLineEdit()
         self.code_input.setPlaceholderText("SILENCE-...")
@@ -255,7 +256,7 @@ class SilenceWindow(QMainWindow):
         ]
         self.modality_buttons = []
         for label, name, value in mapping:
-            button = QPushButton(f"{label}   •   {value}")
+            button = QPushButton(f"{label}")
             button.setObjectName("commandButton")
             button.setMinimumHeight(50)
             button.clicked.connect(
@@ -308,6 +309,19 @@ class SilenceWindow(QMainWindow):
         self.command_status.setWordWrap(True)
         self.command_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.command_status)
+
+        change_game = QPushButton("🎮  TROCAR DE JOGO")
+        change_game.setObjectName("commandButton")
+        change_game.setMinimumHeight(58)
+        change_game.clicked.connect(self.open_game_page)
+        layout.addWidget(change_game)
+
+        self.game_status_button = QPushButton("▶  INICIAR JOGO")
+        self.game_status_button.setObjectName("gameStatusButton")
+        self.game_status_button.setProperty("running", False)
+        self.game_status_button.setMinimumHeight(58)
+        self.game_status_button.clicked.connect(self.toggle_game_status)
+        layout.addWidget(self.game_status_button)
         layout.addStretch()
 
         logout = QPushButton("ENCERRAR SESSÃO")
@@ -316,21 +330,79 @@ class SilenceWindow(QMainWindow):
         layout.addWidget(logout)
         return page
 
+    def build_game_page(self) -> QWidget:
+        page = QWidget()
+        page.setObjectName("page")
+        outer = QVBoxLayout(page)
+        outer.setContentsMargins(14, 16, 14, 16)
+        outer.setSpacing(10)
+
+        heading = QLabel("TROCAR DE JOGO")
+        heading.setObjectName("heading")
+        heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        outer.addWidget(heading)
+
+        scroll = QScrollArea()
+        scroll.setObjectName("gameScroll")
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        content = QWidget()
+        content.setObjectName("scrollContent")
+        game_layout = QVBoxLayout(content)
+        game_layout.setContentsMargins(4, 4, 4, 4)
+        game_layout.setSpacing(7)
+
+        games = [
+            "Fechar",
+            "Fuja",
+            "Massacre",
+            "Danger",
+            "Cruzamento",
+            "Cruza Danger",
+            "Cruzamento 2.0",
+            "Pegue o Drink",
+            "Fuja com Assentos",
+            "Fuja 2.0",
+            "Fuja 3.0",
+            "Fujamento",
+            "Fujamento 3.0",
+            "Corra",
+            "Fuja Roller",
+            "Coletivo",
+            "Queimada",
+        ]
+        self.game_buttons = []
+        for value, name in enumerate(games):
+            button = QPushButton(name)
+            button.setObjectName("gameButton")
+            button.setMinimumHeight(40)
+            button.clicked.connect(
+                lambda _checked=False, selected=value: self.select_game(selected)
+            )
+            self.game_buttons.append(button)
+            game_layout.addWidget(button)
+        game_layout.addStretch()
+        scroll.setWidget(content)
+        outer.addWidget(scroll, 1)
+
+        self.game_status = QLabel("")
+        self.game_status.setObjectName("status")
+        self.game_status.setWordWrap(True)
+        self.game_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        outer.addWidget(self.game_status)
+
+        back = QPushButton("VOLTAR")
+        back.setObjectName("secondaryButton")
+        back.clicked.connect(lambda: self.pages.setCurrentIndex(3))
+        outer.addWidget(back)
+        return page
+
     def authenticate(self):
-        api_url = self.api_url_input.text().strip().rstrip("/")
         code = self.code_input.text().strip()
-        parsed = urlparse(api_url)
-        if parsed.scheme not in {"https", "http"} or not parsed.netloc:
-            self.set_login_status("Informe uma URL válida do servidor.", error=True)
-            return
-        if parsed.scheme != "https" and parsed.hostname not in {"localhost", "127.0.0.1"}:
-            self.set_login_status("O servidor precisa usar HTTPS.", error=True)
-            return
         if not code:
             self.set_login_status("Informe o código recebido no Discord.", error=True)
             return
 
-        self.api.configure(api_url)
         self.login_button.setEnabled(False)
         self.set_login_status("Validando autorização...")
         self.api.redeem(code, self.on_authenticated)
@@ -346,10 +418,10 @@ class SilenceWindow(QMainWindow):
             self.set_login_status("O servidor não retornou uma sessão válida.", error=True)
             return
 
-        self.settings.setValue("api_url", self.api.base_url)
         self.code_input.clear()
         user = data.get("user", {})
         self.user_label.setText(user.get("habbo_username") or "HOST")
+        self.set_game_running(False)
         self.pages.setCurrentIndex(1)
         self.resize(320, 430)
         self.heartbeat_timer.start()
@@ -392,6 +464,76 @@ class SilenceWindow(QMainWindow):
         self.pages.setCurrentIndex(3)
         self.resize(270, 540)
 
+    def open_game_page(self):
+        self.game_status.setText("")
+        self.pages.setCurrentIndex(4)
+        self.resize(285, 620)
+
+    def select_game(self, game: int):
+        for button in self.game_buttons:
+            button.setEnabled(False)
+        self.game_status.setText("Alterando jogo...")
+        self.api.change_game(game, self.on_game_changed)
+
+    def on_game_changed(self, status: int, data: dict):
+        for button in self.game_buttons:
+            button.setEnabled(True)
+        if status != 200:
+            self.game_status.setText(data.get("message", "Não foi possível trocar o jogo."))
+            self.game_status.setProperty("error", True)
+            self.refresh_style(self.game_status)
+            if status == 401:
+                self.return_to_login("A sessão expirou. Solicite uma nova autorização.")
+            return
+
+        game = str(data.get("game", "Jogo")).title()
+        duration = data.get("duration_ms")
+        timing = f" • {duration} ms" if duration is not None else ""
+        self.command_status.setText(f"Jogo atual: {game}{timing}")
+        self.set_game_running(False)
+        self.pages.setCurrentIndex(3)
+        self.resize(270, 540)
+
+    def toggle_game_status(self):
+        target_running = not self.game_running
+        self.game_status_button.setEnabled(False)
+        action = "Iniciando" if target_running else "Parando"
+        self.command_status.setText(f"{action} jogo...")
+        self.api.set_game_status(
+            target_running,
+            lambda status, data: self.on_game_status_changed(
+                status, data, target_running
+            ),
+        )
+
+    def on_game_status_changed(self, status: int, data: dict, target_running: bool):
+        self.game_status_button.setEnabled(True)
+        if status != 200:
+            self.command_status.setText(
+                data.get("message", "Não foi possível alterar o status do jogo.")
+            )
+            self.command_status.setProperty("error", True)
+            self.refresh_style(self.command_status)
+            if status == 401:
+                self.return_to_login("A sessão expirou. Solicite uma nova autorização.")
+            return
+
+        self.set_game_running(target_running)
+        duration = data.get("duration_ms")
+        timing = f" • {duration} ms" if duration is not None else ""
+        state = "iniciado" if target_running else "parado"
+        self.command_status.setText(f"Jogo {state}{timing}.")
+        self.command_status.setProperty("error", False)
+        self.refresh_style(self.command_status)
+
+    def set_game_running(self, running: bool):
+        self.game_running = running
+        self.game_status_button.setText(
+            "⏹  PARAR JOGO" if running else "▶  INICIAR JOGO"
+        )
+        self.game_status_button.setProperty("running", running)
+        self.refresh_style(self.game_status_button)
+
     def send_heartbeat(self):
         if self.api.access_token:
             self.api.heartbeat(self.on_heartbeat)
@@ -409,7 +551,7 @@ class SilenceWindow(QMainWindow):
         self.heartbeat_timer.stop()
         self.api.access_token = ""
         self.pages.setCurrentIndex(0)
-        self.resize(390, 315)
+        self.resize(390, 270)
         self.set_login_status(message)
 
     def set_login_status(self, message: str, error=False):
