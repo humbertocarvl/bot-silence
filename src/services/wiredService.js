@@ -177,7 +177,7 @@ async function batchSetFurniVariable(variableName, furniValues) {
     }
     return {
       op_id: `furni-${furniId}`,
-      method: 'PATCH',
+      method: 'PUT',
       path: `furni/${furniId}`,
       body: { value: String(value) },
     };
@@ -198,8 +198,12 @@ async function batchSetFurniVariable(variableName, furniValues) {
     const results = Array.isArray(response.data?.results) ? response.data.results : [];
     const failures = results.filter((result) => result.status !== 200);
     if (results.length !== requests.length || failures.length > 0) {
+      const errorCodes = [
+        ...new Set(failures.map((result) => result.error?.code).filter(Boolean)),
+      ];
+      const reason = errorCodes.length > 0 ? ` (${errorCodes.join(', ')})` : '';
       throw new WiredServiceError(
-        `A API Wired não atualizou ${failures.length || requests.length - results.length} mobi(s).`,
+        `A API Wired não atualizou ${failures.length || requests.length - results.length} mobi(s)${reason}.`,
         502,
         failures,
       );

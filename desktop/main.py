@@ -8,6 +8,7 @@ from PySide6.QtGui import (
     QCloseEvent,
     QColor,
     QIcon,
+    QIntValidator,
     QMouseEvent,
     QPainter,
     QPixmap,
@@ -26,7 +27,6 @@ from PySide6.QtWidgets import (
     QPushButton,
     QScrollArea,
     QStackedWidget,
-    QSpinBox,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -716,20 +716,24 @@ class SilenceWindow(QMainWindow):
         minus.setObjectName("stepButton")
         minus.setFixedSize(40, 40)
         value_row.addWidget(minus)
-        lives = QSpinBox()
+        lives = QLineEdit("3")
         lives.setObjectName("livesSpin")
-        lives.setRange(0, 9)
-        lives.setValue(3)
+        lives.setValidator(QIntValidator(0, 9, lives))
         lives.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lives.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
         lives.setFixedHeight(40)
+        lives.setMaxLength(1)
+        lives.selectAll()
         value_row.addWidget(lives, 1)
         plus = QPushButton("+")
         plus.setObjectName("stepButton")
         plus.setFixedSize(40, 40)
         value_row.addWidget(plus)
-        minus.clicked.connect(lives.stepDown)
-        plus.clicked.connect(lives.stepUp)
+        def change_value(delta: int):
+            current = int(lives.text() or "0")
+            lives.setText(str(max(0, min(9, current + delta))))
+
+        minus.clicked.connect(lambda: change_value(-1))
+        plus.clicked.connect(lambda: change_value(1))
         layout.addLayout(value_row)
 
         actions = QHBoxLayout()
@@ -746,7 +750,7 @@ class SilenceWindow(QMainWindow):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             team = team_select.currentData()
             team_name = team_select.currentText().split(" ", 1)[-1]
-            value = lives.value()
+            value = int(lives.text() or "0")
             self.set_aux_controls_enabled(False)
             self.set_command_status(f"Atualizando vidas do time {team_name.lower()}...")
             self.api.set_team_lives(

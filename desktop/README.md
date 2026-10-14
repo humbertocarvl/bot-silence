@@ -46,7 +46,7 @@ Os dois ícones compactos abaixo dos controles de jogo oferecem:
 
 Os nomes podem ser personalizados no Railway com `WIRED_ONE_WAY_VARIABLE` e
 `WIRED_LIVES_VARIABLE`. A alteração das seis vidas usa uma única requisição em
-lote à API Wired.
+lote à API Wired e usa `PUT` para definir o valor nos mobis.
 
 ## Personalização
 

@@ -199,8 +199,10 @@ QMenu::separator {
 }
 
 #livesSpin {
+  color: #ffffff;
   font-size: 17px;
   font-weight: 800;
+  padding: 3px 6px;
 }
 
 #gameScroll {
