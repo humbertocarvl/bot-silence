@@ -10,6 +10,7 @@ const {
   incrementGlobalVariable,
   listRoomVariables,
 } = require('../services/wiredService');
+const { startNewEdition } = require('../services/eventEditionService');
 
 const router = express.Router();
 
@@ -43,10 +44,20 @@ router.get('/variables', requireSession({ renew: true }), async (_req, res) => {
   }
 });
 
+router.post('/edition/new', requireSession({ renew: true }), async (req, res) => {
+  try {
+    const result = await startNewEdition(req.body?.modality);
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    return sendError(res, error);
+  }
+});
+
 router.post('/command', requireSession({ renew: true }), async (req, res) => {
   try {
     let result;
     if (req.body?.command === 'increment_global') {
+      const startedAt = Date.now();
       const variableName = req.body?.variable;
       if (typeof variableName !== 'string' || !variableName.trim()) {
         return res.status(400).json({
@@ -55,14 +66,8 @@ router.post('/command', requireSession({ renew: true }), async (req, res) => {
         });
       }
 
-      const variables = await listRoomVariables();
-      if (!variables.global.includes(variableName)) {
-        return res.status(404).json({
-          error: 'variable_not_configured',
-          message: 'A variável global selecionada não está configurada no quarto.',
-        });
-      }
       result = await incrementGlobalVariable(variableName);
+      result.duration_ms = Date.now() - startedAt;
     } else {
       return res.status(400).json({ error: 'unknown_command', message: 'Comando desconhecido.' });
     }

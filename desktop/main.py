@@ -8,7 +8,6 @@ from PySide6.QtGui import QCloseEvent, QMouseEvent
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PySide6.QtWidgets import (
     QApplication,
-    QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -42,13 +41,10 @@ class ApiClient(QObject):
     def heartbeat(self, callback):
         self._post("/api/evento/heartbeat", {}, callback)
 
-    def list_variables(self, callback):
-        self._get("/api/evento/variables", callback)
-
-    def increment_global(self, variable: str, callback):
+    def start_new_edition(self, modality: str, callback):
         self._post(
-            "/api/evento/command",
-            {"command": "increment_global", "variable": variable},
+            "/api/evento/edition/new",
+            {"modality": modality},
             callback,
         )
 
@@ -157,6 +153,8 @@ class SilenceWindow(QMainWindow):
 
         self.pages = QStackedWidget()
         self.pages.addWidget(self.build_login_page())
+        self.pages.addWidget(self.build_edition_setup_page())
+        self.pages.addWidget(self.build_modality_page())
         self.pages.addWidget(self.build_control_page())
         shell_layout.addWidget(self.pages)
         self.setCentralWidget(shell)
@@ -205,6 +203,79 @@ class SilenceWindow(QMainWindow):
         layout.addWidget(self.login_button)
         return page
 
+    def build_edition_setup_page(self) -> QWidget:
+        page = QWidget()
+        page.setObjectName("page")
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(24, 28, 24, 28)
+        layout.setSpacing(14)
+
+        heading = QLabel("CONFIGURAÇÃO DA EDIÇÃO")
+        heading.setObjectName("heading")
+        heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(heading)
+
+        subtitle = QLabel("Como deseja iniciar o painel?")
+        subtitle.setObjectName("muted")
+        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(subtitle)
+        layout.addStretch()
+
+        new_edition = QPushButton("✨  NOVA EDIÇÃO")
+        new_edition.setObjectName("commandButton")
+        new_edition.setMinimumHeight(64)
+        new_edition.clicked.connect(lambda: self.pages.setCurrentIndex(2))
+        layout.addWidget(new_edition)
+
+        continue_edition = QPushButton("▶  CONTINUAR EDIÇÃO ATUAL")
+        continue_edition.setObjectName("secondaryButton")
+        continue_edition.setMinimumHeight(52)
+        continue_edition.clicked.connect(self.continue_current_edition)
+        layout.addWidget(continue_edition)
+        layout.addStretch()
+        return page
+
+    def build_modality_page(self) -> QWidget:
+        page = QWidget()
+        page.setObjectName("page")
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(22, 24, 22, 24)
+        layout.setSpacing(10)
+
+        heading = QLabel("ESCOLHA A MODALIDADE")
+        heading.setObjectName("heading")
+        heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(heading)
+
+        mapping = [
+            ("QUARTETO", "quarteto", 0),
+            ("TRIO", "trio", 1),
+            ("DUPLA", "dupla", 2),
+            ("NORMAL", "normal", 3),
+        ]
+        self.modality_buttons = []
+        for label, name, value in mapping:
+            button = QPushButton(f"{label}   •   {value}")
+            button.setObjectName("commandButton")
+            button.setMinimumHeight(50)
+            button.clicked.connect(
+                lambda _checked=False, selected=name: self.create_new_edition(selected)
+            )
+            self.modality_buttons.append(button)
+            layout.addWidget(button)
+
+        self.modality_status = QLabel("")
+        self.modality_status.setObjectName("status")
+        self.modality_status.setWordWrap(True)
+        self.modality_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.modality_status)
+
+        back = QPushButton("VOLTAR")
+        back.setObjectName("secondaryButton")
+        back.clicked.connect(lambda: self.pages.setCurrentIndex(1))
+        layout.addWidget(back)
+        return page
+
     def build_control_page(self) -> QWidget:
         page = QWidget()
         page.setObjectName("page")
@@ -227,34 +298,12 @@ class SilenceWindow(QMainWindow):
         divider.setObjectName("divider")
         layout.addWidget(divider)
 
-        command_title = QLabel("COMANDOS")
-        command_title.setObjectName("sectionTitle")
-        layout.addWidget(command_title)
+        self.edition_label = QLabel("EDIÇÃO ATUAL")
+        self.edition_label.setObjectName("sectionTitle")
+        self.edition_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.edition_label)
 
-        variable_label = QLabel("Variável global")
-        variable_label.setObjectName("muted")
-        layout.addWidget(variable_label)
-
-        variable_row = QHBoxLayout()
-        variable_row.setSpacing(6)
-        self.variable_combo = QComboBox()
-        self.variable_combo.setPlaceholderText("Carregando...")
-        variable_row.addWidget(self.variable_combo, 1)
-        self.refresh_variables_button = QPushButton("↻")
-        self.refresh_variables_button.setObjectName("secondaryButton")
-        self.refresh_variables_button.setFixedWidth(38)
-        self.refresh_variables_button.clicked.connect(self.load_variables)
-        variable_row.addWidget(self.refresh_variables_button)
-        layout.addLayout(variable_row)
-
-        self.test_button = QPushButton("⚡  SOMAR +1")
-        self.test_button.setObjectName("commandButton")
-        self.test_button.setMinimumHeight(62)
-        self.test_button.setEnabled(False)
-        self.test_button.clicked.connect(self.execute_test)
-        layout.addWidget(self.test_button)
-
-        self.command_status = QLabel("Painel pronto.")
+        self.command_status = QLabel("Painel pronto para receber os próximos comandos.")
         self.command_status.setObjectName("status")
         self.command_status.setWordWrap(True)
         self.command_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -302,61 +351,46 @@ class SilenceWindow(QMainWindow):
         user = data.get("user", {})
         self.user_label.setText(user.get("habbo_username") or "HOST")
         self.pages.setCurrentIndex(1)
-        self.resize(270, 540)
+        self.resize(320, 430)
         self.heartbeat_timer.start()
-        self.command_status.setText("Buscando variáveis do quarto...")
-        self.load_variables()
 
-    def load_variables(self):
-        self.test_button.setEnabled(False)
-        self.refresh_variables_button.setEnabled(False)
-        self.command_status.setText("Buscando variáveis globais...")
-        self.api.list_variables(self.on_variables_loaded)
+    def continue_current_edition(self):
+        self.edition_label.setText("EDIÇÃO ATUAL MANTIDA")
+        self.command_status.setText("Nenhuma variável foi alterada.")
+        self.pages.setCurrentIndex(3)
+        self.resize(270, 540)
 
-    def on_variables_loaded(self, status: int, data: dict):
-        self.refresh_variables_button.setEnabled(True)
+    def create_new_edition(self, modality: str):
+        for button in self.modality_buttons:
+            button.setEnabled(False)
+        self.modality_status.setText("Criando nova edição...")
+        self.api.start_new_edition(
+            modality,
+            lambda status, data: self.on_new_edition(status, data),
+        )
+
+    def on_new_edition(self, status: int, data: dict):
+        for button in self.modality_buttons:
+            button.setEnabled(True)
         if status != 200:
-            self.variable_combo.clear()
-            self.command_status.setText(
-                data.get("message", "Não foi possível listar as variáveis.")
+            self.modality_status.setText(
+                data.get("message", "Não foi possível criar a nova edição.")
             )
+            self.modality_status.setProperty("error", True)
+            self.refresh_style(self.modality_status)
             if status == 401:
                 self.return_to_login("A sessão expirou. Solicite uma nova autorização.")
             return
 
-        global_variables = data.get("global", [])
-        self.variable_combo.clear()
-        self.variable_combo.addItems(sorted(str(name) for name in global_variables))
-        self.test_button.setEnabled(bool(global_variables))
-        if global_variables:
-            self.command_status.setText(
-                f"{len(global_variables)} variável(is) global(is) encontrada(s)."
-            )
-        else:
-            self.command_status.setText("Nenhuma variável global configurada no quarto.")
-
-    def execute_test(self):
-        variable = self.variable_combo.currentText().strip()
-        if not variable:
-            self.command_status.setText("Selecione uma variável global.")
-            return
-        self.test_button.setEnabled(False)
-        self.command_status.setText("Enviando comando...")
-        self.api.increment_global(variable, self.on_test_finished)
-
-    def on_test_finished(self, status: int, data: dict):
-        self.test_button.setEnabled(True)
-        if status == 200:
-            wired = data.get("wired", {})
-            value = wired.get("value", "?")
-            self.command_status.setText(f"✓ Novo valor: {value}")
-            self.command_status.setProperty("error", False)
-        else:
-            self.command_status.setText(data.get("message", "Falha ao executar o comando."))
-            self.command_status.setProperty("error", True)
-            if status == 401:
-                self.return_to_login("A sessão expirou. Solicite uma nova autorização.")
-        self.refresh_style(self.command_status)
+        edition = data.get("edition", "?")
+        modality = str(data.get("modality", "")).upper()
+        duration = data.get("duration_ms")
+        timing = f" • {duration} ms" if duration is not None else ""
+        self.edition_label.setText(f"EDIÇÃO {edition} • {modality}")
+        self.command_status.setText(f"Nova edição configurada{timing}.")
+        self.modality_status.setText("")
+        self.pages.setCurrentIndex(3)
+        self.resize(270, 540)
 
     def send_heartbeat(self):
         if self.api.access_token:

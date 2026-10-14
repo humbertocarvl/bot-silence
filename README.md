@@ -46,6 +46,8 @@ Copie `.env.example` para `.env` e preencha:
 | `HABBO_WIRED_ROOM_ID` | ID numérico do quarto das variáveis Wired |
 | `HABBO_WIRED_READ_KEY` | Chave de leitura Wired (somente Railway) |
 | `HABBO_WIRED_WRITE_KEY` | Chave de escrita Wired (somente Railway) |
+| `WIRED_EDITION_VARIABLE` | Nome da variável global de edição (`edicao`) |
+| `WIRED_MODALITY_VARIABLE` | Nome da variável global de modalidade (`modalidade`) |
 
 ---
 
@@ -88,6 +90,10 @@ desconectado é avisado por DM.
 
 Após publicar o código do bot, execute `npm run deploy` para registrar o novo
 comando `/evento` no Discord.
+
+Na configuração de uma nova edição, o backend lê `edicao`, soma `1` e envia
+`edicao` e `modalidade` juntas em uma única atualização de perfil global. Os
+valores de modalidade são: quarteto `0`, trio `1`, dupla `2` e normal `3`.
 
 ---
 

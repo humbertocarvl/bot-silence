@@ -16,8 +16,17 @@ python main.py
 Na primeira tela, informe a URL pública HTTPS do serviço Railway e o código de
 uso único recebido por DM do bot.
 
-Após autenticar, o painel consulta a API Wired e mostra os nomes das variáveis
-globais configuradas no quarto. Selecione uma delas e use **Somar +1**.
+Após autenticar, escolha entre **Nova edição** e **Continuar edição atual**.
+
+Ao criar uma nova edição, o painel lê a variável global `edicao`, soma `1` e
+atualiza `edicao` e `modalidade` juntas. As modalidades usam estes valores:
+
+- Quarteto: `0`
+- Trio: `1`
+- Dupla: `2`
+- Normal: `3`
+
+Continuar a edição atual não altera nenhuma variável.
 
 ## Personalização
 

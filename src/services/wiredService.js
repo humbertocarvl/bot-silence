@@ -1,4 +1,12 @@
 const axios = require('axios');
+const https = require('https');
+
+// Reutiliza a conexão TLS com o Habbo. Em runtimes Node 18 isso evita um novo
+// handshake HTTPS a cada leitura/atualização.
+const wiredHttp = axios.create({
+  timeout: 10_000,
+  httpsAgent: new https.Agent({ keepAlive: true, maxSockets: 10 }),
+});
 
 class WiredServiceError extends Error {
   constructor(message, status = 502, details = null) {
@@ -66,9 +74,8 @@ function translateAxiosError(error, action) {
 async function getGlobalVariable(variableName) {
   const readKey = requireEnv('HABBO_WIRED_READ_KEY');
   try {
-    const response = await axios.get(getGlobalVariableUrl(variableName), {
+    const response = await wiredHttp.get(getGlobalVariableUrl(variableName), {
       headers: { 'X-Wired-Read-Key': readKey },
-      timeout: 10_000,
     });
     return response.data;
   } catch (error) {
@@ -80,9 +87,8 @@ async function listRoomVariables() {
   const readKey = requireEnv('HABBO_WIRED_READ_KEY');
   const url = `${getWiredBaseUrl()}/rooms/${getRoomId()}/variables`;
   try {
-    const response = await axios.get(url, {
+    const response = await wiredHttp.get(url, {
       headers: { 'X-Wired-Read-Key': readKey },
-      timeout: 10_000,
     });
     return {
       users: Array.isArray(response.data?.users) ? response.data.users : [],
@@ -102,7 +108,7 @@ async function setGlobalVariable(variableName, value) {
   }
 
   try {
-    const response = await axios.patch(
+    const response = await wiredHttp.patch(
       getGlobalVariableUrl(variableName),
       { value: String(value) },
       {
@@ -110,12 +116,42 @@ async function setGlobalVariable(variableName, value) {
           'Content-Type': 'application/json',
           'X-Wired-Write-Key': writeKey,
         },
-        timeout: 10_000,
       },
     );
     return response.data;
   } catch (error) {
     throw translateAxiosError(error, 'atualização');
+  }
+}
+
+async function patchGlobalVariables(variables) {
+  const writeKey = requireEnv('HABBO_WIRED_WRITE_KEY');
+  const normalized = {};
+  for (const [name, value] of Object.entries(variables || {})) {
+    if (!name || !/^-?\d+$/.test(String(value))) {
+      throw new WiredServiceError('Uma variável Wired possui valor inválido.', 400);
+    }
+    normalized[name] = String(value);
+  }
+  if (Object.keys(normalized).length === 0) {
+    throw new WiredServiceError('Nenhuma variável Wired foi informada.', 400);
+  }
+
+  const url = `${getWiredBaseUrl()}/rooms/${getRoomId()}/variables_profile/global`;
+  try {
+    const response = await wiredHttp.patch(
+      url,
+      { variables: normalized },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Wired-Write-Key': writeKey,
+        },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    throw translateAxiosError(error, 'atualização do perfil global');
   }
 }
 
@@ -147,5 +183,6 @@ module.exports = {
   getGlobalVariable,
   incrementGlobalVariable,
   listRoomVariables,
+  patchGlobalVariables,
   setGlobalVariable,
 };
