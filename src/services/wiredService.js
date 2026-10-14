@@ -47,6 +47,13 @@ function getGlobalVariableUrl(variableName) {
   );
 }
 
+function getVariableBatchUrl(scope, variableName) {
+  return (
+    `${getWiredBaseUrl()}/rooms/${getRoomId()}/variables/` +
+    `${encodeURIComponent(scope)}/${encodeURIComponent(variableName)}/batch`
+  );
+}
+
 function translateAxiosError(error, action) {
   const status = error.response?.status;
   const wiredCode = error.response?.data?.error;
@@ -63,7 +70,7 @@ function translateAxiosError(error, action) {
   }
   if (status === 404) {
     return new WiredServiceError(
-      `O quarto ou a variável global não foi encontrado durante a ${action}.`,
+      `O quarto, a variável ou o alvo não foi encontrado durante a ${action}.`,
       404,
       wiredCode,
     );
@@ -155,6 +162,55 @@ async function patchGlobalVariables(variables) {
   }
 }
 
+async function batchSetFurniVariable(variableName, furniValues) {
+  const readKey = requireEnv('HABBO_WIRED_READ_KEY');
+  const writeKey = requireEnv('HABBO_WIRED_WRITE_KEY');
+  const entries = Object.entries(furniValues || {});
+
+  if (!variableName || entries.length === 0 || entries.length > 50) {
+    throw new WiredServiceError('O lote de variáveis de mobis é inválido.', 400);
+  }
+
+  const requests = entries.map(([furniId, value]) => {
+    if (!/^\d+$/.test(furniId) || !/^-?\d+$/.test(String(value))) {
+      throw new WiredServiceError('Um mobi ou valor Wired é inválido.', 400);
+    }
+    return {
+      op_id: `furni-${furniId}`,
+      method: 'PATCH',
+      path: `furni/${furniId}`,
+      body: { value: String(value) },
+    };
+  });
+
+  try {
+    const response = await wiredHttp.post(
+      getVariableBatchUrl('furni', variableName),
+      { requests },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Wired-Read-Key': readKey,
+          'X-Wired-Write-Key': writeKey,
+        },
+      },
+    );
+    const results = Array.isArray(response.data?.results) ? response.data.results : [];
+    const failures = results.filter((result) => result.status !== 200);
+    if (results.length !== requests.length || failures.length > 0) {
+      throw new WiredServiceError(
+        `A API Wired não atualizou ${failures.length || requests.length - results.length} mobi(s).`,
+        502,
+        failures,
+      );
+    }
+    return results;
+  } catch (error) {
+    if (error instanceof WiredServiceError) throw error;
+    throw translateAxiosError(error, 'atualização das variáveis de mobis');
+  }
+}
+
 async function incrementGlobalVariable(variableName) {
   const current = await getGlobalVariable(variableName);
   if (!/^-?\d+$/.test(String(current?.value))) {
@@ -179,6 +235,7 @@ async function incrementGlobalVariable(variableName) {
 }
 
 module.exports = {
+  batchSetFurniVariable,
   WiredServiceError,
   getGlobalVariable,
   incrementGlobalVariable,

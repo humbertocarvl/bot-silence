@@ -36,6 +36,18 @@ O botão **Iniciar jogo** define `status_jogo = 1` e então muda para **Parar
 jogo**, que define `status_jogo = 0`. Ao trocar de jogo, o botão retorna ao
 estado **Iniciar jogo**.
 
+Os dois ícones compactos abaixo dos controles de jogo oferecem:
+
+- **Sentido único:** define a variável global `sentido único` como `0`
+  (fechado), `1` (aberto) ou `2` (abrir para uma pessoa).
+- **Vidas:** altera a variável de mobi `vidas`. É possível definir `3` ou `0`
+  para os seis times de uma vez, ou escolher um time e informar de `0` a `9`
+  vidas pelos botões de menos/mais.
+
+Os nomes podem ser personalizados no Railway com `WIRED_ONE_WAY_VARIABLE` e
+`WIRED_LIVES_VARIABLE`. A alteração das seis vidas usa uma única requisição em
+lote à API Wired.
+
 ## Personalização
 
 As cores, fontes, bordas e botões ficam em `theme.qss`. Alterar esse arquivo não

@@ -2,19 +2,32 @@ import json
 import sys
 from pathlib import Path
 
-from PySide6.QtCore import QByteArray, QObject, QPoint, Qt, QTimer, QUrl
-from PySide6.QtGui import QCloseEvent, QMouseEvent
+from PySide6.QtCore import QByteArray, QObject, QPoint, QSize, Qt, QTimer, QUrl
+from PySide6.QtGui import (
+    QAction,
+    QCloseEvent,
+    QColor,
+    QIcon,
+    QMouseEvent,
+    QPainter,
+    QPixmap,
+)
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PySide6.QtWidgets import (
     QApplication,
+    QComboBox,
+    QDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QMainWindow,
+    QMenu,
     QPushButton,
     QScrollArea,
     QStackedWidget,
+    QSpinBox,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -26,6 +39,54 @@ def resource_path(name: str) -> Path:
 
 
 API_BASE_URL = "https://bot-silence-production.up.railway.app"
+
+
+def make_one_way_icon() -> QIcon:
+    """Miniatura pixelada inspirada no Portão Sentido Único verde do Habbo."""
+    pixmap = QPixmap(40, 40)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+    dark = QColor("#315f28")
+    green = QColor("#7cb135")
+    light = QColor("#bfe36a")
+    white = QColor("#ffffff")
+    shadow = QColor("#182719")
+    painter.fillRect(5, 32, 30, 4, shadow)
+    painter.fillRect(7, 5, 6, 29, dark)
+    painter.fillRect(9, 4, 6, 28, green)
+    painter.fillRect(27, 5, 6, 29, dark)
+    painter.fillRect(25, 4, 6, 28, green)
+    painter.fillRect(11, 5, 18, 6, green)
+    painter.fillRect(13, 6, 14, 3, light)
+    painter.fillRect(13, 17, 14, 5, white)
+    painter.fillRect(22, 14, 6, 11, white)
+    painter.fillRect(27, 16, 4, 7, green)
+    painter.end()
+    return QIcon(pixmap)
+
+
+def make_lives_icon() -> QIcon:
+    pixmap = QPixmap(40, 40)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+    shadow = QColor("#711f2b")
+    red = QColor("#e84b5f")
+    light = QColor("#ff8290")
+    painter.fillRect(7, 10, 10, 5, shadow)
+    painter.fillRect(23, 10, 10, 5, shadow)
+    painter.fillRect(4, 15, 32, 10, shadow)
+    painter.fillRect(8, 25, 24, 5, shadow)
+    painter.fillRect(13, 30, 14, 4, shadow)
+    painter.fillRect(9, 9, 8, 5, red)
+    painter.fillRect(23, 9, 8, 5, red)
+    painter.fillRect(6, 14, 28, 10, red)
+    painter.fillRect(10, 24, 20, 5, red)
+    painter.fillRect(15, 29, 10, 4, red)
+    painter.fillRect(10, 12, 5, 4, light)
+    painter.end()
+    return QIcon(pixmap)
 
 
 class ApiClient(QObject):
@@ -53,6 +114,19 @@ class ApiClient(QObject):
 
     def set_game_status(self, running: bool, callback):
         self._post("/api/evento/game/status", {"running": running}, callback)
+
+    def set_one_way(self, value: int, callback):
+        self._post("/api/evento/controls/one-way", {"value": value}, callback)
+
+    def set_all_lives(self, value: int, callback):
+        self._post("/api/evento/controls/lives/all", {"value": value}, callback)
+
+    def set_team_lives(self, team: str, value: int, callback):
+        self._post(
+            "/api/evento/controls/lives/team",
+            {"team": team, "value": value},
+            callback,
+        )
 
     def logout(self, callback=None):
         self._post("/api/evento/logout", {}, callback or (lambda *_: None))
@@ -322,6 +396,30 @@ class SilenceWindow(QMainWindow):
         self.game_status_button.setMinimumHeight(58)
         self.game_status_button.clicked.connect(self.toggle_game_status)
         layout.addWidget(self.game_status_button)
+
+        quick_controls = QHBoxLayout()
+        quick_controls.setSpacing(10)
+        quick_controls.addStretch()
+
+        self.one_way_button = QToolButton()
+        self.one_way_button.setObjectName("iconControlButton")
+        self.one_way_button.setIcon(make_one_way_icon())
+        self.one_way_button.setIconSize(QSize(40, 40))
+        self.one_way_button.setFixedSize(56, 56)
+        self.one_way_button.setToolTip("Sentido único")
+        self.one_way_button.clicked.connect(self.show_one_way_menu)
+        quick_controls.addWidget(self.one_way_button)
+
+        self.lives_button = QToolButton()
+        self.lives_button.setObjectName("iconControlButton")
+        self.lives_button.setIcon(make_lives_icon())
+        self.lives_button.setIconSize(QSize(40, 40))
+        self.lives_button.setFixedSize(56, 56)
+        self.lives_button.setToolTip("Vidas")
+        self.lives_button.clicked.connect(self.show_lives_menu)
+        quick_controls.addWidget(self.lives_button)
+        quick_controls.addStretch()
+        layout.addLayout(quick_controls)
         layout.addStretch()
 
         logout = QPushButton("ENCERRAR SESSÃO")
@@ -533,6 +631,156 @@ class SilenceWindow(QMainWindow):
         )
         self.game_status_button.setProperty("running", running)
         self.refresh_style(self.game_status_button)
+
+    def show_one_way_menu(self):
+        menu = QMenu(self)
+        states = [
+            ("Fechado", 0),
+            ("Aberto", 1),
+            ("Abrir para uma pessoa", 2),
+        ]
+        for label, value in states:
+            action = QAction(label, menu)
+            action.triggered.connect(
+                lambda _checked=False, selected=value, name=label: self.change_one_way(
+                    selected, name
+                )
+            )
+            menu.addAction(action)
+        menu.exec(self.one_way_button.mapToGlobal(self.one_way_button.rect().bottomLeft()))
+
+    def change_one_way(self, value: int, label: str):
+        self.set_aux_controls_enabled(False)
+        self.set_command_status("Alterando sentido único...")
+        self.api.set_one_way(
+            value,
+            lambda status, data: self.on_aux_control_finished(
+                status, data, f"Sentido único: {label.lower()}"
+            ),
+        )
+
+    def show_lives_menu(self):
+        menu = QMenu(self)
+        reset = menu.addAction("Resetar vidas (3)")
+        zero = menu.addAction("Zerar vidas (0)")
+        menu.addSeparator()
+        team = menu.addAction("Mudar vidas de um time...")
+        chosen = menu.exec(self.lives_button.mapToGlobal(self.lives_button.rect().bottomLeft()))
+        if chosen == reset:
+            self.change_all_lives(3, "Vidas resetadas para 3")
+        elif chosen == zero:
+            self.change_all_lives(0, "Vidas zeradas")
+        elif chosen == team:
+            self.open_team_lives_dialog()
+
+    def change_all_lives(self, value: int, success_message: str):
+        self.set_aux_controls_enabled(False)
+        self.set_command_status("Atualizando as vidas de todos os times...")
+        self.api.set_all_lives(
+            value,
+            lambda status, data: self.on_aux_control_finished(
+                status, data, success_message
+            ),
+        )
+
+    def open_team_lives_dialog(self):
+        dialog = QDialog(self)
+        dialog.setObjectName("livesDialog")
+        dialog.setWindowTitle("Vidas")
+        dialog.setModal(True)
+        dialog.setFixedWidth(245)
+        layout = QVBoxLayout(dialog)
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(10)
+
+        title = QLabel("MUDAR VIDAS DE UM TIME")
+        title.setObjectName("sectionTitle")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title)
+
+        team_select = QComboBox()
+        teams = [
+            ("⚫ Preto", "preto"),
+            ("⚪ Branco", "branco"),
+            ("🔴 Vermelho", "vermelho"),
+            ("🔵 Azul", "azul"),
+            ("🌸 Rosa", "rosa"),
+            ("🟢 Verde", "verde"),
+        ]
+        for label, team in teams:
+            team_select.addItem(label, team)
+        layout.addWidget(team_select)
+
+        value_row = QHBoxLayout()
+        minus = QPushButton("−")
+        minus.setObjectName("stepButton")
+        minus.setFixedSize(40, 40)
+        value_row.addWidget(minus)
+        lives = QSpinBox()
+        lives.setObjectName("livesSpin")
+        lives.setRange(0, 9)
+        lives.setValue(3)
+        lives.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lives.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
+        lives.setFixedHeight(40)
+        value_row.addWidget(lives, 1)
+        plus = QPushButton("+")
+        plus.setObjectName("stepButton")
+        plus.setFixedSize(40, 40)
+        value_row.addWidget(plus)
+        minus.clicked.connect(lives.stepDown)
+        plus.clicked.connect(lives.stepUp)
+        layout.addLayout(value_row)
+
+        actions = QHBoxLayout()
+        cancel = QPushButton("CANCELAR")
+        cancel.setObjectName("secondaryButton")
+        cancel.clicked.connect(dialog.reject)
+        confirm = QPushButton("CONFIRMAR")
+        confirm.setObjectName("primaryButton")
+        confirm.clicked.connect(dialog.accept)
+        actions.addWidget(cancel)
+        actions.addWidget(confirm)
+        layout.addLayout(actions)
+
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            team = team_select.currentData()
+            team_name = team_select.currentText().split(" ", 1)[-1]
+            value = lives.value()
+            self.set_aux_controls_enabled(False)
+            self.set_command_status(f"Atualizando vidas do time {team_name.lower()}...")
+            self.api.set_team_lives(
+                team,
+                value,
+                lambda status, data: self.on_aux_control_finished(
+                    status,
+                    data,
+                    f"Time {team_name.lower()}: {value} vida(s)",
+                ),
+            )
+
+    def on_aux_control_finished(self, status: int, data: dict, success_message: str):
+        self.set_aux_controls_enabled(True)
+        if status != 200:
+            self.set_command_status(
+                data.get("message", "Não foi possível executar o comando."), error=True
+            )
+            if status == 401:
+                self.return_to_login("A sessão expirou. Solicite uma nova autorização.")
+            return
+
+        duration = data.get("duration_ms")
+        timing = f" • {duration} ms" if duration is not None else ""
+        self.set_command_status(f"{success_message}{timing}.")
+
+    def set_aux_controls_enabled(self, enabled: bool):
+        self.one_way_button.setEnabled(enabled)
+        self.lives_button.setEnabled(enabled)
+
+    def set_command_status(self, message: str, error=False):
+        self.command_status.setText(message)
+        self.command_status.setProperty("error", error)
+        self.refresh_style(self.command_status)
 
     def send_heartbeat(self):
         if self.api.access_token:

@@ -60,7 +60,7 @@
   font-weight: 800;
 }
 
-QLineEdit, QComboBox {
+QLineEdit, QComboBox, QSpinBox {
   background-color: #0f1c27;
   color: #ffffff;
   border: 2px solid #34556d;
@@ -69,7 +69,7 @@ QLineEdit, QComboBox {
   selection-background-color: #e9a92f;
 }
 
-QLineEdit:focus, QComboBox:focus {
+QLineEdit:focus, QComboBox:focus, QSpinBox:focus {
   border-color: #ffd24a;
 }
 
@@ -133,6 +133,74 @@ QPushButton {
 
 #gameStatusButton[running="true"]:hover {
   background-color: #bd4747;
+}
+
+#iconControlButton {
+  background-color: #213b4e;
+  border: 2px solid #4a7088;
+  border-bottom: 4px solid #0d2230;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+#iconControlButton:hover {
+  background-color: #2d526b;
+  border-color: #ffd24a;
+}
+
+#iconControlButton:pressed {
+  border-bottom: 2px solid #0d2230;
+  padding-top: 6px;
+}
+
+#iconControlButton:disabled {
+  background-color: #26343e;
+  border-color: #3a4851;
+}
+
+QMenu {
+  color: #f8f3dc;
+  background-color: #172736;
+  border: 2px solid #34556d;
+  padding: 5px;
+}
+
+QMenu::item {
+  border-radius: 4px;
+  padding: 8px 20px 8px 10px;
+}
+
+QMenu::item:selected {
+  color: #251a07;
+  background-color: #ffc43d;
+}
+
+QMenu::separator {
+  background-color: #34556d;
+  height: 1px;
+  margin: 5px 3px;
+}
+
+#livesDialog {
+  background-color: #172736;
+}
+
+#stepButton {
+  color: #251a07;
+  background-color: #ffc43d;
+  border: 2px solid #fff1a8;
+  border-bottom: 3px solid #a66316;
+  font-size: 20px;
+  padding: 0;
+}
+
+#stepButton:hover {
+  background-color: #ffd968;
+}
+
+#livesSpin {
+  font-size: 17px;
+  font-weight: 800;
 }
 
 #gameScroll {

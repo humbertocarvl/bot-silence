@@ -12,6 +12,11 @@ const {
 } = require('../services/wiredService');
 const { startNewEdition } = require('../services/eventEditionService');
 const { changeGame, setGameStatus } = require('../services/eventGameService');
+const {
+  setLivesForAll,
+  setOneWay,
+  setTeamLives,
+} = require('../services/eventControlService');
 
 const router = express.Router();
 
@@ -66,6 +71,33 @@ router.post('/game/change', requireSession({ renew: true }), async (req, res) =>
 router.post('/game/status', requireSession({ renew: true }), async (req, res) => {
   try {
     const result = await setGameStatus(req.body?.running);
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    return sendError(res, error);
+  }
+});
+
+router.post('/controls/one-way', requireSession({ renew: true }), async (req, res) => {
+  try {
+    const result = await setOneWay(req.body?.value);
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    return sendError(res, error);
+  }
+});
+
+router.post('/controls/lives/all', requireSession({ renew: true }), async (req, res) => {
+  try {
+    const result = await setLivesForAll(req.body?.value);
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    return sendError(res, error);
+  }
+});
+
+router.post('/controls/lives/team', requireSession({ renew: true }), async (req, res) => {
+  try {
+    const result = await setTeamLives(req.body?.team, req.body?.value);
     return res.json({ ok: true, ...result });
   } catch (error) {
     return sendError(res, error);
