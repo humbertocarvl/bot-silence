@@ -41,14 +41,14 @@ Os dois ícones compactos abaixo dos controles de jogo oferecem:
 - **Sentido único:** define a variável global `sentido único` como `0`
   (fechado), `1` (aberto) ou `2` (abrir para uma pessoa).
 - **Vidas:** altera a variável de mobi `vidas`. É possível definir `3` ou `0`
-  para os seis times de uma vez, ou escolher um time e informar de `0` a `9`
+  para os nove times de uma vez, ou escolher um time e informar de `0` a `9`
   vidas pelos botões de menos/mais.
 
 Os nomes podem ser personalizados no Railway com `WIRED_ONE_WAY_VARIABLE` e
-`WIRED_LIVES_VARIABLE`. Como os seis IDs informados são mobis do Clube do
-Arquiteto, `WIRED_LIVES_TARGET_KIND` deve permanecer como `furni-bc`. A
-alteração usa uma única requisição em lote à API Wired e atualiza os valores já
-existentes com `PATCH`.
+`WIRED_LIVES_VARIABLE`. Mantenha `WIRED_LIVES_TARGET_KIND=auto` para o servidor
+tentar automaticamente os tipos `furni` e `furni-bc`. A alteração atualiza os
+valores já existentes com `PATCH` e só repete os itens que não forem encontrados
+no primeiro tipo.
 
 ## Personalização
 

@@ -8,6 +8,9 @@ const TEAM_FURNI = Object.freeze({
   azul: '2147418251',
   rosa: '2147418254',
   verde: '2147418255',
+  amarelo: '2147418146',
+  bege: '2147418145',
+  roxo: '2147418147',
 });
 
 async function setOneWay(value) {
@@ -40,7 +43,7 @@ async function setTeamLives(team, value) {
 
 async function updateLives(furniValues) {
   const variableName = process.env.WIRED_LIVES_VARIABLE?.trim() || 'vidas';
-  const targetKind = process.env.WIRED_LIVES_TARGET_KIND?.trim() || 'furni-bc';
+  const targetKind = process.env.WIRED_LIVES_TARGET_KIND?.trim() || 'auto';
   const startedAt = Date.now();
   await batchSetFurniVariable(variableName, furniValues, targetKind);
   return {

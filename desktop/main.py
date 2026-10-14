@@ -706,6 +706,9 @@ class SilenceWindow(QMainWindow):
             ("🔵 Azul", "azul"),
             ("🌸 Rosa", "rosa"),
             ("🟢 Verde", "verde"),
+            ("🟡 Amarelo", "amarelo"),
+            ("🟤 Bege", "bege"),
+            ("🟣 Roxo", "roxo"),
         ]
         for label, team in teams:
             team_select.addItem(label, team)
