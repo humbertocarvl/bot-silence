@@ -9,15 +9,17 @@ const {
 let furniVariablesCache = { expiresAt: 0, names: [] };
 
 const TEAM_FURNI = Object.freeze({
-  preto: '2147418248',
-  branco: '2147418249',
-  vermelho: '2147418250',
-  azul: '2147418251',
-  rosa: '2147418254',
-  verde: '2147418255',
-  amarelo: '2147418146',
-  bege: '2147418145',
-  roxo: '2147418147',
+  // A API usa o BC ID exibido pelo visualizador, não o In-Game ID.
+  // BC ID = In-Game ID - 2147418112.
+  preto: '136',
+  branco: '137',
+  vermelho: '138',
+  azul: '139',
+  rosa: '142',
+  verde: '143',
+  amarelo: '34',
+  bege: '33',
+  roxo: '35',
 });
 
 async function setOneWay(value) {

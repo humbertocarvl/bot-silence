@@ -49,6 +49,11 @@ Os nomes podem ser personalizados no Railway com `WIRED_ONE_WAY_VARIABLE` e
 Clube do Arquiteto (`furni-bc`). Os nove perfis são atualizados em paralelo pela
 rota de perfil de variáveis da API Wired.
 
+Para mobis BC, a API recebe o **BC ID** mostrado pelo Visualizador de Variáveis,
+e não o **In-Game ID**. Os IDs configurados são: preto `136`, branco `137`,
+vermelho `138`, azul `139`, rosa `142`, verde `143`, amarelo `34`, bege `33` e
+roxo `35`.
+
 ## Personalização
 
 As cores, fontes, bordas e botões ficam em `theme.qss`. Alterar esse arquivo não
