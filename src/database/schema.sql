@@ -50,7 +50,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS event_access_one_open_request_per_user
   WHERE status IN ('pending', 'approved');
 
 -- Uma única linha funciona como lease global: somente uma pessoa pode usar o
--- aplicativo por vez. O heartbeat renova expires_at; sessões abandonadas expiram.
+-- aplicativo por vez. O heartbeat renova expires_at, e sessões abandonadas expiram.
 CREATE TABLE IF NOT EXISTS event_active_session (
   lock_id             SMALLINT     PRIMARY KEY CHECK (lock_id = 1),
   request_id          UUID         UNIQUE REFERENCES event_access_requests(id) ON DELETE SET NULL,

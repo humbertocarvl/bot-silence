@@ -37,15 +37,9 @@ module.exports = {
 
 async function runMigrations() {
   const sql = fs.readFileSync(path.join(__dirname, '../database/schema.sql'), 'utf8');
-  // Executa cada statement separadamente
-  const statements = sql
-    .split(';')
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  for (const statement of statements) {
-    await query(statement);
-  }
+  // O PostgreSQL aceita o arquivo com vários statements. Não separar por `;`:
+  // comentários e strings também podem conter esse caractere.
+  await query(sql);
   console.log('✅ Migrações aplicadas');
 }
 
