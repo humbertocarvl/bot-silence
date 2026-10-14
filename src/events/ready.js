@@ -2,6 +2,7 @@ const { Events, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = r
 const { query } = require('../database/index');
 const fs = require('fs');
 const path = require('path');
+const { validateEventConfiguration } = require('../services/eventAccessService');
 
 module.exports = {
   name: Events.ClientReady,
@@ -11,6 +12,13 @@ module.exports = {
     console.log(`✅ Silence online como ${client.user.tag}`);
 
     await runMigrations();
+
+    const missingEventVariables = validateEventConfiguration();
+    if (missingEventVariables.length > 0) {
+      console.warn(
+        `⚠️  Painel de eventos desativado até configurar: ${missingEventVariables.join(', ')}`,
+      );
+    }
 
     const guild = client.guilds.cache.get(process.env.GUILD_ID);
     if (!guild) {

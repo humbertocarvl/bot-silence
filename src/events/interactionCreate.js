@@ -17,6 +17,7 @@ const {
 const { getUserByName } = require('../services/habboService');
 const { upsertProfileEmbed } = require('../services/profileService');
 const { query } = require('../database/index');
+const { handleEventAccessInteraction } = require('../handlers/eventAccessInteractions');
 
 module.exports = {
   name: Events.InteractionCreate,
@@ -41,6 +42,11 @@ module.exports = {
       }
       return;
     }
+
+    // -----------------------------------------------------------------------
+    // Fluxo de autorização do painel de eventos
+    // -----------------------------------------------------------------------
+    if (await handleEventAccessInteraction(interaction, client)) return;
 
     // -----------------------------------------------------------------------
     // Botão: iniciar verificação

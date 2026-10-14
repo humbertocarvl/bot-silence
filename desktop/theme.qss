@@ -1,0 +1,135 @@
+* {
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 13px;
+  color: #f8f3dc;
+}
+
+#shell {
+  background-color: #172736;
+  border: 3px solid #0b1118;
+  border-radius: 9px;
+}
+
+#titleBar {
+  background-color: #203d55;
+  border-bottom: 3px solid #0b1118;
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+}
+
+#brand {
+  color: #ffd24a;
+  font-family: "Arial Black", "Segoe UI", sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+#page {
+  background-color: #172736;
+}
+
+#heading {
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+#sectionTitle {
+  color: #9fc6df;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+#muted, #status {
+  color: #a9becc;
+}
+
+#status[error="true"] {
+  color: #ff8585;
+}
+
+#authorized {
+  color: #79dc83;
+  background-color: #193d2b;
+  border: 2px solid #2c7046;
+  border-radius: 5px;
+  padding: 7px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+QLineEdit {
+  background-color: #0f1c27;
+  color: #ffffff;
+  border: 2px solid #34556d;
+  border-radius: 5px;
+  padding: 9px 10px;
+  selection-background-color: #e9a92f;
+}
+
+QLineEdit:focus {
+  border-color: #ffd24a;
+}
+
+QPushButton {
+  border-radius: 5px;
+  font-weight: 800;
+  padding: 9px;
+}
+
+#primaryButton, #commandButton {
+  color: #251a07;
+  background-color: #ffc43d;
+  border: 2px solid #fff1a8;
+  border-bottom: 4px solid #a66316;
+}
+
+#primaryButton:hover, #commandButton:hover {
+  background-color: #ffd968;
+}
+
+#primaryButton:pressed, #commandButton:pressed {
+  border-bottom: 2px solid #a66316;
+  padding-top: 11px;
+}
+
+#primaryButton:disabled, #commandButton:disabled {
+  color: #756d5b;
+  background-color: #8c846f;
+  border-color: #5c574c;
+}
+
+#secondaryButton {
+  color: #c5dae8;
+  background-color: #213b4e;
+  border: 2px solid #34556d;
+}
+
+#secondaryButton:hover {
+  background-color: #2a4c63;
+}
+
+#windowButton, #closeButton {
+  color: #d9e9f2;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-size: 16px;
+}
+
+#windowButton:hover {
+  background-color: #31536b;
+}
+
+#closeButton:hover {
+  color: white;
+  background-color: #b94040;
+}
+
+#divider {
+  color: #34556d;
+  background-color: #34556d;
+  max-height: 2px;
+}

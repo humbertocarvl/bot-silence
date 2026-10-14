@@ -39,6 +39,14 @@ Copie `.env.example` para `.env` e preencha:
 | `PLAYER_ROLE_ID` | Cargo atribuído ao aceitar as regras |
 | `DATABASE_URL` | Connection string PostgreSQL |
 | `HABBO_API_BASE` | `https://www.habbo.com.br/api/public` |
+| `HOST_ROLE_ID` | ID do cargo HOST autorizado a solicitar o painel |
+| `EVENT_ADMIN_IDS` | IDs Discord dos administradores, separados por vírgula |
+| `SILENCE_SESSION_SECRET` | Segredo aleatório com no mínimo 32 caracteres |
+| `HABBO_WIRED_BASE_URL` | `https://www.habbo.com.br/api/public` |
+| `HABBO_WIRED_ROOM_ID` | ID numérico do quarto das variáveis Wired |
+| `HABBO_WIRED_READ_KEY` | Chave de leitura Wired (somente Railway) |
+| `HABBO_WIRED_WRITE_KEY` | Chave de escrita Wired (somente Railway) |
+| `HABBO_WIRED_TEST_VARIABLE` | Variável global incrementada pelo botão (`2147418112`) |
 
 ---
 
@@ -61,6 +69,26 @@ npm start
 
 > **Atenção:** No [Developer Portal](https://discord.com/developers/applications), ative os **Privileged Gateway Intents**:
 > - ✅ Server Members Intent
+
+## Painel de eventos
+
+O comando `/evento` só funciona dentro do servidor para usuários que:
+
+1. tenham uma conta Habbo registrada em `verified_users`;
+2. possuam a role configurada em `HOST_ROLE_ID`.
+
+Depois da confirmação, os usuários listados em `EVENT_ADMIN_IDS` recebem a
+solicitação por DM. A aprovação gera um código de uso único, também enviado por
+DM. O aplicativo em `desktop/` troca esse código por uma sessão exclusiva. A
+chave Wired permanece no Railway e nunca é entregue ao aplicativo.
+
+Se o próprio HOST estiver listado em `EVENT_ADMIN_IDS`, ele pode gerar seu
+código sem aprovação de outra pessoa. Caso alguém já esteja usando o painel, o
+bot exige uma segunda confirmação antes de encerrar a sessão ativa. O usuário
+desconectado é avisado por DM.
+
+Após publicar o código do bot, execute `npm run deploy` para registrar o novo
+comando `/evento` no Discord.
 
 ---
 
