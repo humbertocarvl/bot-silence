@@ -16,6 +16,9 @@ python main.py
 Na primeira tela, informe a URL pública HTTPS do serviço Railway e o código de
 uso único recebido por DM do bot.
 
+Após autenticar, o painel consulta a API Wired e mostra os nomes das variáveis
+globais configuradas no quarto. Selecione uma delas e use **Somar +1**.
+
 ## Personalização
 
 As cores, fontes, bordas e botões ficam em `theme.qss`. Alterar esse arquivo não

@@ -8,6 +8,7 @@ from PySide6.QtGui import QCloseEvent, QMouseEvent
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PySide6.QtWidgets import (
     QApplication,
+    QComboBox,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -41,13 +42,33 @@ class ApiClient(QObject):
     def heartbeat(self, callback):
         self._post("/api/evento/heartbeat", {}, callback)
 
-    def execute_test(self, callback):
-        self._post("/api/evento/command", {"command": "test"}, callback)
+    def list_variables(self, callback):
+        self._get("/api/evento/variables", callback)
+
+    def increment_global(self, variable: str, callback):
+        self._post(
+            "/api/evento/command",
+            {"command": "increment_global", "variable": variable},
+            callback,
+        )
 
     def logout(self, callback=None):
         self._post("/api/evento/logout", {}, callback or (lambda *_: None))
 
     def _post(self, path: str, payload: dict, callback, authenticated=True):
+        request = self._request(path, authenticated)
+
+        reply = self.network.post(
+            request,
+            QByteArray(json.dumps(payload).encode("utf-8")),
+        )
+        reply.finished.connect(lambda: self._finish(reply, callback))
+
+    def _get(self, path: str, callback):
+        reply = self.network.get(self._request(path, True))
+        reply.finished.connect(lambda: self._finish(reply, callback))
+
+    def _request(self, path: str, authenticated: bool):
         request = QNetworkRequest(QUrl(f"{self.base_url}{path}"))
         request.setHeader(QNetworkRequest.ContentTypeHeader, "application/json")
         request.setRawHeader(b"Accept", b"application/json")
@@ -55,12 +76,7 @@ class ApiClient(QObject):
             request.setRawHeader(
                 b"Authorization", f"Bearer {self.access_token}".encode("utf-8")
             )
-
-        reply = self.network.post(
-            request,
-            QByteArray(json.dumps(payload).encode("utf-8")),
-        )
-        reply.finished.connect(lambda: self._finish(reply, callback))
+        return request
 
     @staticmethod
     def _finish(reply: QNetworkReply, callback):
@@ -215,9 +231,26 @@ class SilenceWindow(QMainWindow):
         command_title.setObjectName("sectionTitle")
         layout.addWidget(command_title)
 
+        variable_label = QLabel("Variável global")
+        variable_label.setObjectName("muted")
+        layout.addWidget(variable_label)
+
+        variable_row = QHBoxLayout()
+        variable_row.setSpacing(6)
+        self.variable_combo = QComboBox()
+        self.variable_combo.setPlaceholderText("Carregando...")
+        variable_row.addWidget(self.variable_combo, 1)
+        self.refresh_variables_button = QPushButton("↻")
+        self.refresh_variables_button.setObjectName("secondaryButton")
+        self.refresh_variables_button.setFixedWidth(38)
+        self.refresh_variables_button.clicked.connect(self.load_variables)
+        variable_row.addWidget(self.refresh_variables_button)
+        layout.addLayout(variable_row)
+
         self.test_button = QPushButton("⚡  SOMAR +1")
         self.test_button.setObjectName("commandButton")
         self.test_button.setMinimumHeight(62)
+        self.test_button.setEnabled(False)
         self.test_button.clicked.connect(self.execute_test)
         layout.addWidget(self.test_button)
 
@@ -271,12 +304,45 @@ class SilenceWindow(QMainWindow):
         self.pages.setCurrentIndex(1)
         self.resize(270, 540)
         self.heartbeat_timer.start()
-        self.command_status.setText("Painel pronto.")
+        self.command_status.setText("Buscando variáveis do quarto...")
+        self.load_variables()
+
+    def load_variables(self):
+        self.test_button.setEnabled(False)
+        self.refresh_variables_button.setEnabled(False)
+        self.command_status.setText("Buscando variáveis globais...")
+        self.api.list_variables(self.on_variables_loaded)
+
+    def on_variables_loaded(self, status: int, data: dict):
+        self.refresh_variables_button.setEnabled(True)
+        if status != 200:
+            self.variable_combo.clear()
+            self.command_status.setText(
+                data.get("message", "Não foi possível listar as variáveis.")
+            )
+            if status == 401:
+                self.return_to_login("A sessão expirou. Solicite uma nova autorização.")
+            return
+
+        global_variables = data.get("global", [])
+        self.variable_combo.clear()
+        self.variable_combo.addItems(sorted(str(name) for name in global_variables))
+        self.test_button.setEnabled(bool(global_variables))
+        if global_variables:
+            self.command_status.setText(
+                f"{len(global_variables)} variável(is) global(is) encontrada(s)."
+            )
+        else:
+            self.command_status.setText("Nenhuma variável global configurada no quarto.")
 
     def execute_test(self):
+        variable = self.variable_combo.currentText().strip()
+        if not variable:
+            self.command_status.setText("Selecione uma variável global.")
+            return
         self.test_button.setEnabled(False)
         self.command_status.setText("Enviando comando...")
-        self.api.execute_test(self.on_test_finished)
+        self.api.increment_global(variable, self.on_test_finished)
 
     def on_test_finished(self, status: int, data: dict):
         self.test_button.setEnabled(True)

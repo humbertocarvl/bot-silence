@@ -46,7 +46,6 @@ Copie `.env.example` para `.env` e preencha:
 | `HABBO_WIRED_ROOM_ID` | ID numérico do quarto das variáveis Wired |
 | `HABBO_WIRED_READ_KEY` | Chave de leitura Wired (somente Railway) |
 | `HABBO_WIRED_WRITE_KEY` | Chave de escrita Wired (somente Railway) |
-| `HABBO_WIRED_TEST_VARIABLE` | Variável global incrementada pelo botão (`2147418112`) |
 
 ---
 

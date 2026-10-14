@@ -60,7 +60,7 @@
   font-weight: 800;
 }
 
-QLineEdit {
+QLineEdit, QComboBox {
   background-color: #0f1c27;
   color: #ffffff;
   border: 2px solid #34556d;
@@ -69,8 +69,20 @@ QLineEdit {
   selection-background-color: #e9a92f;
 }
 
-QLineEdit:focus {
+QLineEdit:focus, QComboBox:focus {
   border-color: #ffd24a;
+}
+
+QComboBox::drop-down {
+  border: 0;
+  width: 24px;
+}
+
+QComboBox QAbstractItemView {
+  color: #ffffff;
+  background-color: #0f1c27;
+  selection-background-color: #34556d;
+  border: 2px solid #34556d;
 }
 
 QPushButton {

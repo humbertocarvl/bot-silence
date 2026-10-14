@@ -5,7 +5,11 @@ const {
   redeemAuthorizationCode,
   releaseSession,
 } = require('../services/eventAccessService');
-const { WiredServiceError, executeTestCommand } = require('../services/wiredService');
+const {
+  WiredServiceError,
+  incrementGlobalVariable,
+  listRoomVariables,
+} = require('../services/wiredService');
 
 const router = express.Router();
 
@@ -30,14 +34,39 @@ router.post('/heartbeat', requireSession({ renew: true }), async (req, res) => {
   return res.json({ ok: true, expires_at: req.eventSession.expires_at });
 });
 
+router.get('/variables', requireSession({ renew: true }), async (_req, res) => {
+  try {
+    const variables = await listRoomVariables();
+    return res.json(variables);
+  } catch (error) {
+    return sendError(res, error);
+  }
+});
+
 router.post('/command', requireSession({ renew: true }), async (req, res) => {
   try {
-    if (req.body?.command !== 'test') {
+    let result;
+    if (req.body?.command === 'increment_global') {
+      const variableName = req.body?.variable;
+      if (typeof variableName !== 'string' || !variableName.trim()) {
+        return res.status(400).json({
+          error: 'invalid_variable',
+          message: 'Selecione uma variável global.',
+        });
+      }
+
+      const variables = await listRoomVariables();
+      if (!variables.global.includes(variableName)) {
+        return res.status(404).json({
+          error: 'variable_not_configured',
+          message: 'A variável global selecionada não está configurada no quarto.',
+        });
+      }
+      result = await incrementGlobalVariable(variableName);
+    } else {
       return res.status(400).json({ error: 'unknown_command', message: 'Comando desconhecido.' });
     }
-
-    const result = await executeTestCommand();
-    return res.json({ ok: true, command: 'test', wired: result });
+    return res.json({ ok: true, command: req.body.command, wired: result });
   } catch (error) {
     return sendError(res, error);
   }

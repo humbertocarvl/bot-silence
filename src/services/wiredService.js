@@ -76,6 +76,24 @@ async function getGlobalVariable(variableName) {
   }
 }
 
+async function listRoomVariables() {
+  const readKey = requireEnv('HABBO_WIRED_READ_KEY');
+  const url = `${getWiredBaseUrl()}/rooms/${getRoomId()}/variables`;
+  try {
+    const response = await axios.get(url, {
+      headers: { 'X-Wired-Read-Key': readKey },
+      timeout: 10_000,
+    });
+    return {
+      users: Array.isArray(response.data?.users) ? response.data.users : [],
+      furni: Array.isArray(response.data?.furni) ? response.data.furni : [],
+      global: Array.isArray(response.data?.global) ? response.data.global : [],
+    };
+  } catch (error) {
+    throw translateAxiosError(error, 'listagem');
+  }
+}
+
 async function setGlobalVariable(variableName, value) {
   const writeKey = requireEnv('HABBO_WIRED_WRITE_KEY');
 
@@ -124,15 +142,10 @@ async function incrementGlobalVariable(variableName) {
   };
 }
 
-async function executeTestCommand() {
-  const variableName = process.env.HABBO_WIRED_TEST_VARIABLE?.trim() || '2147418112';
-  return incrementGlobalVariable(variableName);
-}
-
 module.exports = {
   WiredServiceError,
-  executeTestCommand,
   getGlobalVariable,
   incrementGlobalVariable,
+  listRoomVariables,
   setGlobalVariable,
 };
