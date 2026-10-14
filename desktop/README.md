@@ -45,8 +45,10 @@ Os dois ícones compactos abaixo dos controles de jogo oferecem:
   vidas pelos botões de menos/mais.
 
 Os nomes podem ser personalizados no Railway com `WIRED_ONE_WAY_VARIABLE` e
-`WIRED_LIVES_VARIABLE`. A alteração das seis vidas usa uma única requisição em
-lote à API Wired e usa `PUT` para definir o valor nos mobis.
+`WIRED_LIVES_VARIABLE`. Como os seis IDs informados são mobis do Clube do
+Arquiteto, `WIRED_LIVES_TARGET_KIND` deve permanecer como `furni-bc`. A
+alteração usa uma única requisição em lote à API Wired e atualiza os valores já
+existentes com `PATCH`.
 
 ## Personalização
 

@@ -40,8 +40,9 @@ async function setTeamLives(team, value) {
 
 async function updateLives(furniValues) {
   const variableName = process.env.WIRED_LIVES_VARIABLE?.trim() || 'vidas';
+  const targetKind = process.env.WIRED_LIVES_TARGET_KIND?.trim() || 'furni-bc';
   const startedAt = Date.now();
-  await batchSetFurniVariable(variableName, furniValues);
+  await batchSetFurniVariable(variableName, furniValues, targetKind);
   return {
     value: Object.values(furniValues)[0],
     updated_count: Object.keys(furniValues).length,

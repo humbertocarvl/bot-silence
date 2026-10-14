@@ -162,10 +162,14 @@ async function patchGlobalVariables(variables) {
   }
 }
 
-async function batchSetFurniVariable(variableName, furniValues) {
+async function batchSetFurniVariable(variableName, furniValues, targetKind = 'furni') {
   const readKey = requireEnv('HABBO_WIRED_READ_KEY');
   const writeKey = requireEnv('HABBO_WIRED_WRITE_KEY');
   const entries = Object.entries(furniValues || {});
+
+  if (!['furni', 'furni-bc'].includes(targetKind)) {
+    throw new WiredServiceError('O tipo de mobi Wired é inválido.', 400);
+  }
 
   if (!variableName || entries.length === 0 || entries.length > 50) {
     throw new WiredServiceError('O lote de variáveis de mobis é inválido.', 400);
@@ -177,8 +181,8 @@ async function batchSetFurniVariable(variableName, furniValues) {
     }
     return {
       op_id: `furni-${furniId}`,
-      method: 'PUT',
-      path: `furni/${furniId}`,
+      method: 'PATCH',
+      path: `${targetKind}/${furniId}`,
       body: { value: String(value) },
     };
   });
