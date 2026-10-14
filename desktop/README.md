@@ -45,10 +45,9 @@ Os dois ícones compactos abaixo dos controles de jogo oferecem:
   vidas pelos botões de menos/mais.
 
 Os nomes podem ser personalizados no Railway com `WIRED_ONE_WAY_VARIABLE` e
-`WIRED_LIVES_VARIABLE`. Mantenha `WIRED_LIVES_TARGET_KIND=auto` para o servidor
-tentar automaticamente os tipos `furni` e `furni-bc`. A alteração atualiza os
-valores já existentes com `PATCH` e só repete os itens que não forem encontrados
-no primeiro tipo.
+`WIRED_LIVES_VARIABLE`. As vidas usam diretamente perfis de floor furni do
+Clube do Arquiteto (`furni-bc`). Os nove perfis são atualizados em paralelo pela
+rota de perfil de variáveis da API Wired.
 
 ## Personalização
 
