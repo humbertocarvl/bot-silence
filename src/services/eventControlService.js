@@ -33,6 +33,16 @@ async function setOneWay(value) {
   return { value, duration_ms: Date.now() - startedAt };
 }
 
+async function setRestaOne(value) {
+  if (!Number.isInteger(value) || value < 0 || value > 3) {
+    throw new EventAccessError('invalid_resta_one', 'Opção do Resta 1 inválida.', 400);
+  }
+
+  const startedAt = Date.now();
+  await setGlobalVariable('resta_1', String(value));
+  return { value, duration_ms: Date.now() - startedAt };
+}
+
 async function setLivesForAll(value) {
   validateLives(value);
   return updateLives(
@@ -118,4 +128,4 @@ function validateLives(value) {
   }
 }
 
-module.exports = { TEAM_FURNI, setLivesForAll, setOneWay, setTeamLives };
+module.exports = { TEAM_FURNI, setLivesForAll, setOneWay, setRestaOne, setTeamLives };

@@ -89,6 +89,38 @@ def make_lives_icon() -> QIcon:
     return QIcon(pixmap)
 
 
+def make_roller_icon() -> QIcon:
+    """Miniatura pixelada inspirada no Roller azul do Habbo."""
+    pixmap = QPixmap(40, 40)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+    darkest = QColor("#17384f")
+    dark = QColor("#245c7d")
+    blue = QColor("#3f8db5")
+    light = QColor("#79c5df")
+    shine = QColor("#b9edf2")
+
+    # Base isométrica e laterais do piso transportador.
+    painter.fillRect(5, 28, 25, 5, darkest)
+    painter.fillRect(10, 33, 20, 3, darkest)
+    painter.fillRect(30, 12, 5, 20, darkest)
+    painter.fillRect(8, 25, 22, 7, dark)
+    painter.fillRect(30, 14, 4, 16, dark)
+
+    # Cinco roletes diagonais, mantendo o visual pixelado do Habbo.
+    for offset in range(0, 20, 4):
+        x = 6 + offset
+        y = 22 - offset // 2
+        painter.fillRect(x, y, 10, 5, darkest)
+        painter.fillRect(x + 1, y - 2, 10, 5, blue)
+        painter.fillRect(x + 2, y - 1, 7, 1, light)
+        painter.fillRect(x + 9, y - 1, 2, 3, shine)
+
+    painter.end()
+    return QIcon(pixmap)
+
+
 class ApiClient(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -127,6 +159,9 @@ class ApiClient(QObject):
             {"team": team, "value": value},
             callback,
         )
+
+    def set_resta_one(self, value: int, callback):
+        self._post("/api/evento/controls/resta-1", {"value": value}, callback)
 
     def logout(self, callback=None):
         self._post("/api/evento/logout", {}, callback or (lambda *_: None))
@@ -418,6 +453,15 @@ class SilenceWindow(QMainWindow):
         self.lives_button.setToolTip("Vidas")
         self.lives_button.clicked.connect(self.show_lives_menu)
         quick_controls.addWidget(self.lives_button)
+
+        self.resta_one_button = QToolButton()
+        self.resta_one_button.setObjectName("iconControlButton")
+        self.resta_one_button.setIcon(make_roller_icon())
+        self.resta_one_button.setIconSize(QSize(40, 40))
+        self.resta_one_button.setFixedSize(56, 56)
+        self.resta_one_button.setToolTip("Resta 1")
+        self.resta_one_button.clicked.connect(self.show_resta_one_menu)
+        quick_controls.addWidget(self.resta_one_button)
         quick_controls.addStretch()
         layout.addLayout(quick_controls)
         layout.addStretch()
@@ -683,6 +727,38 @@ class SilenceWindow(QMainWindow):
             ),
         )
 
+    def show_resta_one_menu(self):
+        menu = QMenu(self)
+        options = [
+            ("Resetar", 0),
+            ("3 fileiras", 1),
+            ("2 fileiras", 2),
+            ("1 fileira", 3),
+        ]
+        for label, value in options:
+            action = QAction(label, menu)
+            action.triggered.connect(
+                lambda _checked=False, selected=value, name=label: self.change_resta_one(
+                    selected, name
+                )
+            )
+            menu.addAction(action)
+        menu.exec(
+            self.resta_one_button.mapToGlobal(
+                self.resta_one_button.rect().bottomLeft()
+            )
+        )
+
+    def change_resta_one(self, value: int, label: str):
+        self.set_aux_controls_enabled(False)
+        self.set_command_status("Alterando Resta 1...")
+        self.api.set_resta_one(
+            value,
+            lambda status, data: self.on_aux_control_finished(
+                status, data, f"Resta 1: {label.lower()}"
+            ),
+        )
+
     def open_team_lives_dialog(self):
         dialog = QDialog(self)
         dialog.setObjectName("livesDialog")
@@ -783,6 +859,7 @@ class SilenceWindow(QMainWindow):
     def set_aux_controls_enabled(self, enabled: bool):
         self.one_way_button.setEnabled(enabled)
         self.lives_button.setEnabled(enabled)
+        self.resta_one_button.setEnabled(enabled)
 
     def set_command_status(self, message: str, error=False):
         self.command_status.setText(message)

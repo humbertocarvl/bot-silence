@@ -15,6 +15,7 @@ const { changeGame, setGameStatus } = require('../services/eventGameService');
 const {
   setLivesForAll,
   setOneWay,
+  setRestaOne,
   setTeamLives,
 } = require('../services/eventControlService');
 
@@ -89,6 +90,15 @@ router.post('/controls/one-way', requireSession({ renew: true }), async (req, re
 router.post('/controls/lives/all', requireSession({ renew: true }), async (req, res) => {
   try {
     const result = await setLivesForAll(req.body?.value);
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    return sendError(res, error);
+  }
+});
+
+router.post('/controls/resta-1', requireSession({ renew: true }), async (req, res) => {
+  try {
+    const result = await setRestaOne(req.body?.value);
     return res.json({ ok: true, ...result });
   } catch (error) {
     return sendError(res, error);

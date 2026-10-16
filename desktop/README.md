@@ -36,13 +36,15 @@ O botão **Iniciar jogo** define `status_jogo = 1` e então muda para **Parar
 jogo**, que define `status_jogo = 0`. Ao trocar de jogo, o botão retorna ao
 estado **Iniciar jogo**.
 
-Os dois ícones compactos abaixo dos controles de jogo oferecem:
+Os três ícones compactos abaixo dos controles de jogo oferecem:
 
 - **Sentido único:** define a variável global `sentido único` como `0`
   (fechado), `1` (aberto) ou `2` (abrir para uma pessoa).
 - **Vidas:** altera a variável de mobi `vidas`. É possível definir `3` ou `0`
   para os nove times de uma vez, ou escolher um time e informar de `0` a `9`
   vidas pelos botões de menos/mais.
+- **Resta 1:** define a variável global `resta_1` como `0` (resetar), `1`
+  (3 fileiras), `2` (2 fileiras) ou `3` (1 fileira).
 
 Os nomes podem ser personalizados no Railway com `WIRED_ONE_WAY_VARIABLE` e
 `WIRED_LIVES_VARIABLE`. As vidas usam diretamente perfis de floor furni do
