@@ -227,11 +227,14 @@ async function findUserVariableHolder(variableName, uniqueId, username) {
     }
 
     const items = Array.isArray(response.data?.items) ? response.data.items : [];
-    const holder = items.find((item) => {
-      const itemUniqueId = String(item?.unique_id || '').trim().toLowerCase();
-      const itemName = String(item?.name || '').trim().toLowerCase();
-      return itemUniqueId === expectedUniqueId || (!itemUniqueId && itemName === expectedName);
-    });
+    const holder = items
+      .map(normalizeUserVariableHolder)
+      .find(
+        (item) =>
+          item &&
+          (item.uniqueId.toLowerCase() === expectedUniqueId ||
+            (expectedName && item.name.toLowerCase() === expectedName)),
+      );
     if (holder) return holder;
     if (items.length < pageSize) break;
   }
@@ -242,6 +245,43 @@ async function findUserVariableHolder(variableName, uniqueId, username) {
     404,
     'wired.variables.entity_not_found',
   );
+}
+
+function normalizeUserVariableHolder(item) {
+  if (!item || typeof item !== 'object') return null;
+
+  // A listagem da API já retornou estes dados tanto diretamente no item
+  // quanto dentro do objeto da entidade. O perfil deve usar o ID numérico
+  // interno, nunca o unique_id (hh...).
+  const nested = [item.user, item.target, item.entity, item.holder].find(
+    (candidate) => candidate && typeof candidate === 'object',
+  );
+  const entity = nested || item;
+  const rawId =
+    entity.id ??
+    entity.user_id ??
+    entity.userId ??
+    entity.entity_id ??
+    entity.entityId ??
+    item.target_id ??
+    item.targetId;
+  const id = Number(rawId);
+  if (!Number.isSafeInteger(id) || id < 0) return null;
+
+  return {
+    id,
+    name: String(
+      entity.name ?? entity.username ?? item.name ?? item.username ?? item.target_name ?? '',
+    ).trim(),
+    uniqueId: String(
+      entity.unique_id ??
+        entity.uniqueId ??
+        item.unique_id ??
+        item.uniqueId ??
+        item.target_unique_id ??
+        '',
+    ).trim(),
+  };
 }
 
 async function patchUserVariablesProfile(userId, variables) {
