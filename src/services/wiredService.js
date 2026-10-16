@@ -209,34 +209,43 @@ async function findUserVariableHolder(variableName, uniqueId, username) {
   }
 
   const url =
-    `${getWiredBaseUrl()}/rooms/${getRoomId()}/variables/user/` +
-    `${encodeURIComponent(variableName.trim())}/users`;
-  const expectedUniqueId = uniqueId.trim().toLowerCase();
-  const expectedName = typeof username === 'string' ? username.trim().toLowerCase() : '';
-  const pageSize = 100;
+    `${getWiredBaseUrl()}/rooms/${getRoomId()}/variables_profile/user/users`;
+  const lookups = [{ unique_id: uniqueId.trim() }];
+  if (typeof username === 'string' && username.trim()) {
+    lookups.push({ name: username.trim() });
+  }
 
-  for (let page = 1; page <= 100; page += 1) {
+  for (const params of lookups) {
     let response;
     try {
       response = await wiredHttp.get(url, {
-        params: { page, size: pageSize },
+        params,
         headers: { 'X-Wired-Read-Key': readKey },
       });
     } catch (error) {
-      throw translateAxiosError(error, `listagem da variável ${variableName}`);
+      // O nome serve como segunda forma de localizar o mesmo perfil quando o
+      // unique_id salvo na vinculação estiver desatualizado.
+      if (error.response?.status === 404) continue;
+      throw translateAxiosError(error, `leitura do perfil de ${username || uniqueId}`);
     }
 
-    const items = Array.isArray(response.data?.items) ? response.data.items : [];
-    const holder = items
-      .map(normalizeUserVariableHolder)
-      .find(
-        (item) =>
-          item &&
-          (item.uniqueId.toLowerCase() === expectedUniqueId ||
-            (expectedName && item.name.toLowerCase() === expectedName)),
+    const holder = normalizeUserVariableHolder(response.data?.user);
+    if (!holder) {
+      throw new WiredServiceError(
+        'A API Wired retornou um perfil sem o ID interno do usuário.',
+        502,
+        'wired.variables.invalid_user_profile',
       );
-    if (holder) return holder;
-    if (items.length < pageSize) break;
+    }
+
+    const variables = response.data?.variables;
+    const isInRoomVariable =
+      variables &&
+      typeof variables === 'object' &&
+      Object.prototype.hasOwnProperty.call(variables, variableName.trim());
+    if (isInRoomVariable) return holder;
+
+    break;
   }
 
   throw new WiredServiceError(
@@ -263,6 +272,9 @@ function normalizeUserVariableHolder(item) {
     entity.userId ??
     entity.entity_id ??
     entity.entityId ??
+    item.id ??
+    item.user_id ??
+    item.userId ??
     item.target_id ??
     item.targetId;
   const id = Number(rawId);

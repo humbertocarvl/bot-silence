@@ -53,9 +53,9 @@ Os botões de texto adicionais oferecem:
 - **Teleportar para o jogo:** define a variável global `tj` como `0` (pisos
   para o Resta 1), `1` (teleportar ao jogo) ou `2` (teleportar ao Resta 1).
 
-O ícone **Mover usuário** procura o ID único `hh...` do Habbo da sessão entre
-os titulares da variável de usuário `usuario_no_quarto`. Com o ID numérico
-interno encontrado, define `mover_usuario` como `0` (prova), `1` (Resta 1), `2`
+O ícone **Mover usuário** consulta pelo ID único `hh...` o perfil Wired do
+Habbo da sessão e confirma nele a variável `usuario_no_quarto`. Com o ID
+numérico interno do perfil, define `mover_usuario` como `0` (prova), `1` (Resta 1), `2`
 (fora) ou `3` (hall do elenco). Os nomes podem ser personalizados no Railway
 com `WIRED_ROOM_USER_VARIABLE` e `WIRED_MOVE_USER_VARIABLE`.
 
