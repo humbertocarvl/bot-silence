@@ -9,6 +9,7 @@ const {
 } = require('./wiredService');
 
 let furniVariablesCache = { expiresAt: 0, names: [] };
+let userVariablesCache = { expiresAt: 0, names: [] };
 
 const TEAM_FURNI = Object.freeze({
   // A API usa o BC ID exibido pelo visualizador, não o In-Game ID.
@@ -79,6 +80,7 @@ async function setMoveUser(habboUniqueId, habboUsername, value) {
   const roomUserVariable =
     process.env.WIRED_ROOM_USER_VARIABLE?.trim() || 'usuario_no_quarto';
   const startedAt = Date.now();
+  await ensureUserVariableConfigured(variableName);
   const holder = await findUserVariableHolder(
     roomUserVariable,
     habboUniqueId,
@@ -99,6 +101,24 @@ async function setMoveUser(habboUniqueId, habboUsername, value) {
     user_id: userId,
     duration_ms: Date.now() - startedAt,
   };
+}
+
+async function ensureUserVariableConfigured(variableName) {
+  if (Date.now() >= userVariablesCache.expiresAt) {
+    const variables = await listRoomVariables();
+    userVariablesCache = {
+      expiresAt: Date.now() + 60_000,
+      names: variables.users,
+    };
+  }
+  if (!userVariablesCache.names.includes(variableName)) {
+    throw new WiredServiceError(
+      `A variável de usuário "${variableName}" não está disponível na API Wired. ` +
+        'Configure-a no complemento Web API do quarto e tente novamente.',
+      404,
+      'wired.variables.not_found',
+    );
+  }
 }
 
 async function setGlobalControl(variableName, value) {
