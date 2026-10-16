@@ -316,18 +316,23 @@ async function authenticateSession(token, { renew = false } = {}) {
   const tokenHash = hashSecret(token);
   const ttlSeconds = positiveIntegerEnv('EVENT_SESSION_TTL_SECONDS', DEFAULT_SESSION_TTL_SECONDS);
   const sql = renew
-    ? `UPDATE event_active_session
+    ? `UPDATE event_active_session AS session
           SET last_heartbeat_at = NOW(),
               expires_at = NOW() + ($2::int * INTERVAL '1 second')
-        WHERE lock_id = 1
-          AND session_token_hash = $1
-          AND expires_at > NOW()
-        RETURNING *`
-    : `SELECT *
-         FROM event_active_session
-        WHERE lock_id = 1
-          AND session_token_hash = $1
-          AND expires_at > NOW()`;
+         FROM event_access_requests AS request
+         JOIN verified_users AS verified ON verified.discord_id = request.discord_id
+        WHERE session.lock_id = 1
+          AND session.session_token_hash = $1
+          AND session.expires_at > NOW()
+          AND request.id = session.request_id
+        RETURNING session.*, request.habbo_username, verified.habbo_unique_id`
+    : `SELECT session.*, request.habbo_username, verified.habbo_unique_id
+         FROM event_active_session AS session
+         JOIN event_access_requests AS request ON request.id = session.request_id
+         JOIN verified_users AS verified ON verified.discord_id = session.discord_id
+        WHERE session.lock_id = 1
+          AND session.session_token_hash = $1
+          AND session.expires_at > NOW()`;
   const params = renew ? [tokenHash, ttlSeconds] : [tokenHash];
   const result = await query(sql, params);
 

@@ -121,6 +121,43 @@ def make_roller_icon() -> QIcon:
     return QIcon(pixmap)
 
 
+def make_move_user_icon() -> QIcon:
+    """Ícone pixelado 1 → 2 para o controle de teletransporte do usuário."""
+    pixmap = QPixmap(40, 40)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing, False)
+    dark = QColor("#132b3c")
+    blue = QColor("#3f8db5")
+    yellow = QColor("#ffc43d")
+    white = QColor("#f8f3dc")
+
+    painter.fillRect(2, 10, 13, 20, dark)
+    painter.fillRect(3, 9, 12, 19, blue)
+    painter.fillRect(25, 12, 13, 20, dark)
+    painter.fillRect(25, 11, 12, 19, yellow)
+
+    # Número 1.
+    painter.fillRect(8, 13, 3, 11, white)
+    painter.fillRect(6, 15, 2, 3, white)
+    painter.fillRect(6, 24, 7, 3, white)
+
+    # Seta para a direita.
+    painter.fillRect(14, 19, 11, 4, white)
+    painter.fillRect(21, 16, 4, 10, white)
+    painter.fillRect(24, 18, 3, 6, white)
+
+    # Número 2.
+    painter.fillRect(28, 14, 6, 3, dark)
+    painter.fillRect(32, 17, 3, 4, dark)
+    painter.fillRect(28, 20, 6, 3, dark)
+    painter.fillRect(27, 23, 3, 4, dark)
+    painter.fillRect(28, 26, 7, 3, dark)
+
+    painter.end()
+    return QIcon(pixmap)
+
+
 class ApiClient(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -162,6 +199,15 @@ class ApiClient(QObject):
 
     def set_resta_one(self, value: int, callback):
         self._post("/api/evento/controls/resta-1", {"value": value}, callback)
+
+    def set_marathon(self, value: int, callback):
+        self._post("/api/evento/controls/marathon", {"value": value}, callback)
+
+    def set_teleport_game(self, value: int, callback):
+        self._post("/api/evento/controls/teleport-game", {"value": value}, callback)
+
+    def set_move_user(self, value: int, callback):
+        self._post("/api/evento/controls/move-user", {"value": value}, callback)
 
     def logout(self, callback=None):
         self._post("/api/evento/logout", {}, callback or (lambda *_: None))
@@ -432,6 +478,18 @@ class SilenceWindow(QMainWindow):
         self.game_status_button.clicked.connect(self.toggle_game_status)
         layout.addWidget(self.game_status_button)
 
+        self.marathon_button = QPushButton("MARATONA")
+        self.marathon_button.setObjectName("commandButton")
+        self.marathon_button.setMinimumHeight(48)
+        self.marathon_button.clicked.connect(self.show_marathon_menu)
+        layout.addWidget(self.marathon_button)
+
+        self.teleport_game_button = QPushButton("TELEPORTAR PARA O JOGO")
+        self.teleport_game_button.setObjectName("commandButton")
+        self.teleport_game_button.setMinimumHeight(48)
+        self.teleport_game_button.clicked.connect(self.show_teleport_game_menu)
+        layout.addWidget(self.teleport_game_button)
+
         quick_controls = QHBoxLayout()
         quick_controls.setSpacing(10)
         quick_controls.addStretch()
@@ -462,6 +520,15 @@ class SilenceWindow(QMainWindow):
         self.resta_one_button.setToolTip("Resta 1")
         self.resta_one_button.clicked.connect(self.show_resta_one_menu)
         quick_controls.addWidget(self.resta_one_button)
+
+        self.move_user_button = QToolButton()
+        self.move_user_button.setObjectName("iconControlButton")
+        self.move_user_button.setIcon(make_move_user_icon())
+        self.move_user_button.setIconSize(QSize(40, 40))
+        self.move_user_button.setFixedSize(56, 56)
+        self.move_user_button.setToolTip("Mover usuário")
+        self.move_user_button.clicked.connect(self.show_move_user_menu)
+        quick_controls.addWidget(self.move_user_button)
         quick_controls.addStretch()
         layout.addLayout(quick_controls)
         layout.addStretch()
@@ -572,7 +639,7 @@ class SilenceWindow(QMainWindow):
         self.edition_label.setText("EDIÇÃO ATUAL MANTIDA")
         self.command_status.setText("Nenhuma variável foi alterada.")
         self.pages.setCurrentIndex(3)
-        self.resize(270, 540)
+        self.resize(300, 680)
 
     def create_new_edition(self, modality: str):
         for button in self.modality_buttons:
@@ -604,7 +671,7 @@ class SilenceWindow(QMainWindow):
         self.command_status.setText(f"Nova edição configurada{timing}.")
         self.modality_status.setText("")
         self.pages.setCurrentIndex(3)
-        self.resize(270, 540)
+        self.resize(300, 680)
 
     def open_game_page(self):
         self.game_status.setText("")
@@ -634,7 +701,7 @@ class SilenceWindow(QMainWindow):
         self.command_status.setText(f"Jogo atual: {game}{timing}")
         self.set_game_running(False)
         self.pages.setCurrentIndex(3)
-        self.resize(270, 540)
+        self.resize(300, 680)
 
     def toggle_game_status(self):
         target_running = not self.game_running
@@ -759,6 +826,94 @@ class SilenceWindow(QMainWindow):
             ),
         )
 
+    def show_marathon_menu(self):
+        menu = QMenu(self)
+        options = [("Começar", 1), ("Encerrar", 0)]
+        for label, value in options:
+            action = QAction(label, menu)
+            action.triggered.connect(
+                lambda _checked=False, selected=value, name=label: self.change_marathon(
+                    selected, name
+                )
+            )
+            menu.addAction(action)
+        menu.exec(
+            self.marathon_button.mapToGlobal(self.marathon_button.rect().bottomLeft())
+        )
+
+    def change_marathon(self, value: int, label: str):
+        self.set_aux_controls_enabled(False)
+        self.set_command_status("Alterando Maratona...")
+        self.api.set_marathon(
+            value,
+            lambda status, data: self.on_aux_control_finished(
+                status, data, f"Maratona: {label.lower()}"
+            ),
+        )
+
+    def show_teleport_game_menu(self):
+        menu = QMenu(self)
+        options = [
+            ("Pisos para o Resta 1", 0),
+            ("Teleportar ao jogo", 1),
+            ("Teleportar ao Resta 1", 2),
+        ]
+        for label, value in options:
+            action = QAction(label, menu)
+            action.triggered.connect(
+                lambda _checked=False, selected=value, name=label: self.change_teleport_game(
+                    selected, name
+                )
+            )
+            menu.addAction(action)
+        menu.exec(
+            self.teleport_game_button.mapToGlobal(
+                self.teleport_game_button.rect().bottomLeft()
+            )
+        )
+
+    def change_teleport_game(self, value: int, label: str):
+        self.set_aux_controls_enabled(False)
+        self.set_command_status("Alterando teletransporte...")
+        self.api.set_teleport_game(
+            value,
+            lambda status, data: self.on_aux_control_finished(
+                status, data, label
+            ),
+        )
+
+    def show_move_user_menu(self):
+        menu = QMenu(self)
+        options = [
+            ("Mover para a prova", 0),
+            ("Mover para o Resta 1", 1),
+            ("Mover para fora", 2),
+            ("Mover para o hall do elenco", 3),
+        ]
+        for label, value in options:
+            action = QAction(label, menu)
+            action.triggered.connect(
+                lambda _checked=False, selected=value, name=label: self.change_move_user(
+                    selected, name
+                )
+            )
+            menu.addAction(action)
+        menu.exec(
+            self.move_user_button.mapToGlobal(
+                self.move_user_button.rect().bottomLeft()
+            )
+        )
+
+    def change_move_user(self, value: int, label: str):
+        self.set_aux_controls_enabled(False)
+        self.set_command_status("Movendo usuário da sessão...")
+        self.api.set_move_user(
+            value,
+            lambda status, data: self.on_aux_control_finished(
+                status, data, label
+            ),
+        )
+
     def open_team_lives_dialog(self):
         dialog = QDialog(self)
         dialog.setObjectName("livesDialog")
@@ -857,9 +1012,12 @@ class SilenceWindow(QMainWindow):
         self.set_command_status(f"{success_message}{timing}.")
 
     def set_aux_controls_enabled(self, enabled: bool):
+        self.marathon_button.setEnabled(enabled)
+        self.teleport_game_button.setEnabled(enabled)
         self.one_way_button.setEnabled(enabled)
         self.lives_button.setEnabled(enabled)
         self.resta_one_button.setEnabled(enabled)
+        self.move_user_button.setEnabled(enabled)
 
     def set_command_status(self, message: str, error=False):
         self.command_status.setText(message)

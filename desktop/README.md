@@ -46,6 +46,19 @@ Os três ícones compactos abaixo dos controles de jogo oferecem:
 - **Resta 1:** define a variável global `resta_1` como `0` (resetar), `1`
   (3 fileiras), `2` (2 fileiras) ou `3` (1 fileira).
 
+Os botões de texto adicionais oferecem:
+
+- **Maratona:** define a variável global `maratona` como `1` (começar) ou `0`
+  (encerrar).
+- **Teleportar para o jogo:** define a variável global `tj` como `0` (pisos
+  para o Resta 1), `1` (teleportar ao jogo) ou `2` (teleportar ao Resta 1).
+
+O ícone **Mover usuário** usa o ID único `hh...` do Habbo vinculado à sessão
+ativa para localizar seu ID numérico interno no quarto. Em seguida, define a
+variável de usuário `mover_usuario` como `0` (prova), `1` (Resta 1), `2` (fora)
+ou `3` (hall do elenco). Esse nome pode ser personalizado no Railway com
+`WIRED_MOVE_USER_VARIABLE`.
+
 Os nomes podem ser personalizados no Railway com `WIRED_ONE_WAY_VARIABLE` e
 `WIRED_LIVES_VARIABLE`. As vidas usam diretamente perfis de floor furni do
 Clube do Arquiteto (`furni-bc`). Os nove perfis são atualizados em paralelo pela

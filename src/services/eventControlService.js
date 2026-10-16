@@ -1,7 +1,9 @@
 const { EventAccessError } = require('./eventAccessService');
 const {
+  findUserVariablesProfileByUniqueId,
   listRoomVariables,
   patchFurniVariablesProfile,
+  patchUserVariablesProfile,
   setGlobalVariable,
   WiredServiceError,
 } = require('./wiredService');
@@ -41,6 +43,68 @@ async function setRestaOne(value) {
   const startedAt = Date.now();
   await setGlobalVariable('resta_1', String(value));
   return { value, duration_ms: Date.now() - startedAt };
+}
+
+async function setMarathon(value) {
+  validateIntegerOption(value, 1, 'invalid_marathon', 'Estado da Maratona inválido.');
+  return setGlobalControl('maratona', value);
+}
+
+async function setTeleportGame(value) {
+  validateIntegerOption(
+    value,
+    2,
+    'invalid_teleport_game',
+    'Opção de teletransporte inválida.',
+  );
+  return setGlobalControl('tj', value);
+}
+
+async function setMoveUser(habboUniqueId, value) {
+  validateIntegerOption(
+    value,
+    3,
+    'invalid_move_user',
+    'Destino do usuário inválido.',
+  );
+  if (typeof habboUniqueId !== 'string' || !/^hh/i.test(habboUniqueId.trim())) {
+    throw new EventAccessError(
+      'invalid_habbo_user',
+      'ID único do Habbo da sessão inválido.',
+      400,
+    );
+  }
+
+  const variableName = process.env.WIRED_MOVE_USER_VARIABLE?.trim() || 'mover_usuario';
+  const startedAt = Date.now();
+  const profile = await findUserVariablesProfileByUniqueId(habboUniqueId);
+  const userId = profile?.user?.id;
+  if (!Number.isInteger(userId) || userId < 0) {
+    throw new WiredServiceError(
+      `A API Wired não retornou o ID interno de ${habboUniqueId}.`,
+      502,
+      'wired.variables.invalid_user_profile',
+    );
+  }
+  await patchUserVariablesProfile(userId, { [variableName]: value });
+  return {
+    value,
+    user_unique_id: habboUniqueId,
+    user_id: userId,
+    duration_ms: Date.now() - startedAt,
+  };
+}
+
+async function setGlobalControl(variableName, value) {
+  const startedAt = Date.now();
+  await setGlobalVariable(variableName, String(value));
+  return { value, duration_ms: Date.now() - startedAt };
+}
+
+function validateIntegerOption(value, maximum, code, message) {
+  if (!Number.isInteger(value) || value < 0 || value > maximum) {
+    throw new EventAccessError(code, message, 400);
+  }
 }
 
 async function setLivesForAll(value) {
@@ -128,4 +192,13 @@ function validateLives(value) {
   }
 }
 
-module.exports = { TEAM_FURNI, setLivesForAll, setOneWay, setRestaOne, setTeamLives };
+module.exports = {
+  TEAM_FURNI,
+  setLivesForAll,
+  setMarathon,
+  setMoveUser,
+  setOneWay,
+  setRestaOne,
+  setTeamLives,
+  setTeleportGame,
+};

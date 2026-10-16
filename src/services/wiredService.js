@@ -192,6 +192,61 @@ async function patchFurniVariablesProfile(targetKind, furniId, variables) {
   }
 }
 
+async function findUserVariablesProfileByUniqueId(uniqueId) {
+  const readKey = requireEnv('HABBO_WIRED_READ_KEY');
+  if (typeof uniqueId !== 'string' || !/^hh/i.test(uniqueId.trim())) {
+    throw new WiredServiceError('O ID único do usuário Wired é inválido.', 400);
+  }
+
+  const url = `${getWiredBaseUrl()}/rooms/${getRoomId()}/variables_profile/user/users`;
+  try {
+    const response = await wiredHttp.get(url, {
+      params: { unique_id: uniqueId.trim() },
+      headers: { 'X-Wired-Read-Key': readKey },
+    });
+    return response.data;
+  } catch (error) {
+    throw translateAxiosError(error, `localização do usuário ${uniqueId}`);
+  }
+}
+
+async function patchUserVariablesProfile(userId, variables) {
+  const writeKey = requireEnv('HABBO_WIRED_WRITE_KEY');
+  if (!/^\d+$/.test(String(userId))) {
+    throw new WiredServiceError('O ID interno do usuário Wired é inválido.', 400);
+  }
+
+  const normalized = {};
+  for (const [name, value] of Object.entries(variables || {})) {
+    if (!name || !/^-?\d+$/.test(String(value))) {
+      throw new WiredServiceError('Uma variável de usuário possui valor inválido.', 400);
+    }
+    normalized[name] = String(value);
+  }
+  if (Object.keys(normalized).length === 0) {
+    throw new WiredServiceError('Nenhuma variável de usuário foi informada.', 400);
+  }
+
+  const url =
+    `${getWiredBaseUrl()}/rooms/${getRoomId()}/variables_profile/user/users/` +
+    encodeURIComponent(String(userId));
+  try {
+    const response = await wiredHttp.patch(
+      url,
+      { variables: normalized },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Wired-Write-Key': writeKey,
+        },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    throw translateAxiosError(error, `atualização do usuário ${userId}`);
+  }
+}
+
 async function incrementGlobalVariable(variableName) {
   const current = await getGlobalVariable(variableName);
   if (!/^-?\d+$/.test(String(current?.value))) {
@@ -217,10 +272,12 @@ async function incrementGlobalVariable(variableName) {
 
 module.exports = {
   WiredServiceError,
+  findUserVariablesProfileByUniqueId,
   getGlobalVariable,
   incrementGlobalVariable,
   listRoomVariables,
   patchFurniVariablesProfile,
   patchGlobalVariables,
+  patchUserVariablesProfile,
   setGlobalVariable,
 };

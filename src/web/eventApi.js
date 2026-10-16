@@ -14,9 +14,12 @@ const { startNewEdition } = require('../services/eventEditionService');
 const { changeGame, setGameStatus } = require('../services/eventGameService');
 const {
   setLivesForAll,
+  setMarathon,
+  setMoveUser,
   setOneWay,
   setRestaOne,
   setTeamLives,
+  setTeleportGame,
 } = require('../services/eventControlService');
 
 const router = express.Router();
@@ -99,6 +102,33 @@ router.post('/controls/lives/all', requireSession({ renew: true }), async (req, 
 router.post('/controls/resta-1', requireSession({ renew: true }), async (req, res) => {
   try {
     const result = await setRestaOne(req.body?.value);
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    return sendError(res, error);
+  }
+});
+
+router.post('/controls/marathon', requireSession({ renew: true }), async (req, res) => {
+  try {
+    const result = await setMarathon(req.body?.value);
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    return sendError(res, error);
+  }
+});
+
+router.post('/controls/teleport-game', requireSession({ renew: true }), async (req, res) => {
+  try {
+    const result = await setTeleportGame(req.body?.value);
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    return sendError(res, error);
+  }
+});
+
+router.post('/controls/move-user', requireSession({ renew: true }), async (req, res) => {
+  try {
+    const result = await setMoveUser(req.eventSession.habbo_unique_id, req.body?.value);
     return res.json({ ok: true, ...result });
   } catch (error) {
     return sendError(res, error);
