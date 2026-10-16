@@ -1,7 +1,6 @@
 const { EventAccessError } = require('./eventAccessService');
 const {
-  findUserVariablesProfileByName,
-  findUserVariablesProfileByUniqueId,
+  findUserVariableHolder,
   listRoomVariables,
   patchFurniVariablesProfile,
   patchUserVariablesProfile,
@@ -77,30 +76,15 @@ async function setMoveUser(habboUniqueId, habboUsername, value) {
   }
 
   const variableName = process.env.WIRED_MOVE_USER_VARIABLE?.trim() || 'mover_usuario';
+  const roomUserVariable =
+    process.env.WIRED_ROOM_USER_VARIABLE?.trim() || 'usuario_no_quarto';
   const startedAt = Date.now();
-  let profile;
-  try {
-    profile = await findUserVariablesProfileByUniqueId(habboUniqueId);
-  } catch (error) {
-    if (!(error instanceof WiredServiceError) || error.status !== 404) throw error;
-    if (error.details === 'room.not_found') throw error;
-
-    try {
-      profile = await findUserVariablesProfileByName(habboUsername);
-    } catch (fallbackError) {
-      if (!(fallbackError instanceof WiredServiceError) || fallbackError.status !== 404) {
-        throw fallbackError;
-      }
-      if (fallbackError.details === 'room.not_found') throw fallbackError;
-      throw new WiredServiceError(
-        `O usuário ${habboUsername} não foi encontrado no quarto configurado. ` +
-          'Entre no quarto do evento e tente novamente.',
-        404,
-        fallbackError.details || error.details || 'wired.variables.entity_not_found',
-      );
-    }
-  }
-  const userId = profile?.user?.id;
+  const holder = await findUserVariableHolder(
+    roomUserVariable,
+    habboUniqueId,
+    habboUsername,
+  );
+  const userId = holder?.id;
   if (!Number.isInteger(userId) || userId < 0) {
     throw new WiredServiceError(
       `A API Wired não retornou o ID interno de ${habboUniqueId}.`,

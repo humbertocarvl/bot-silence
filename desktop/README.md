@@ -53,13 +53,11 @@ Os botões de texto adicionais oferecem:
 - **Teleportar para o jogo:** define a variável global `tj` como `0` (pisos
   para o Resta 1), `1` (teleportar ao jogo) ou `2` (teleportar ao Resta 1).
 
-O ícone **Mover usuário** usa o ID único `hh...` do Habbo vinculado à sessão
-ativa para localizar seu ID numérico interno no quarto. Em seguida, define a
-variável de usuário `mover_usuario` como `0` (prova), `1` (Resta 1), `2` (fora)
-ou `3` (hall do elenco). Esse nome pode ser personalizado no Railway com
-`WIRED_MOVE_USER_VARIABLE`. O usuário precisa estar participando do quarto do
-evento para que a API consiga resolver seu ID interno. Em versões da API que
-não resolvem `unique_id`, o painel tenta o nick autenticado como compatibilidade.
+O ícone **Mover usuário** procura o ID único `hh...` do Habbo da sessão entre
+os titulares da variável de usuário `usuario_no_quarto`. Com o ID numérico
+interno encontrado, define `mover_usuario` como `0` (prova), `1` (Resta 1), `2`
+(fora) ou `3` (hall do elenco). Os nomes podem ser personalizados no Railway
+com `WIRED_ROOM_USER_VARIABLE` e `WIRED_MOVE_USER_VARIABLE`.
 
 Os nomes podem ser personalizados no Railway com `WIRED_ONE_WAY_VARIABLE` e
 `WIRED_LIVES_VARIABLE`. As vidas usam diretamente perfis de floor furni do

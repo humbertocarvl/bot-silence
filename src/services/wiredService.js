@@ -199,35 +199,49 @@ async function patchFurniVariablesProfile(targetKind, furniId, variables) {
   }
 }
 
-async function findUserVariablesProfileByUniqueId(uniqueId) {
+async function findUserVariableHolder(variableName, uniqueId, username) {
+  const readKey = requireEnv('HABBO_WIRED_READ_KEY');
+  if (typeof variableName !== 'string' || !variableName.trim()) {
+    throw new WiredServiceError('O nome da variável de usuário é inválido.', 400);
+  }
   if (typeof uniqueId !== 'string' || !/^hh/i.test(uniqueId.trim())) {
     throw new WiredServiceError('O ID único do usuário Wired é inválido.', 400);
   }
 
-  return findUserVariablesProfile({ unique_id: uniqueId.trim() }, uniqueId);
-}
+  const url =
+    `${getWiredBaseUrl()}/rooms/${getRoomId()}/variables/user/` +
+    `${encodeURIComponent(variableName.trim())}/users`;
+  const expectedUniqueId = uniqueId.trim().toLowerCase();
+  const expectedName = typeof username === 'string' ? username.trim().toLowerCase() : '';
+  const pageSize = 100;
 
-async function findUserVariablesProfileByName(username) {
-  if (typeof username !== 'string' || !username.trim()) {
-    throw new WiredServiceError('O nome do usuário Wired é inválido.', 400);
-  }
+  for (let page = 1; page <= 100; page += 1) {
+    let response;
+    try {
+      response = await wiredHttp.get(url, {
+        params: { page, size: pageSize },
+        headers: { 'X-Wired-Read-Key': readKey },
+      });
+    } catch (error) {
+      throw translateAxiosError(error, `listagem da variável ${variableName}`);
+    }
 
-  return findUserVariablesProfile({ name: username.trim() }, username);
-}
-
-async function findUserVariablesProfile(params, description) {
-  const readKey = requireEnv('HABBO_WIRED_READ_KEY');
-
-  const url = `${getWiredBaseUrl()}/rooms/${getRoomId()}/variables_profile/user/users`;
-  try {
-    const response = await wiredHttp.get(url, {
-      params,
-      headers: { 'X-Wired-Read-Key': readKey },
+    const items = Array.isArray(response.data?.items) ? response.data.items : [];
+    const holder = items.find((item) => {
+      const itemUniqueId = String(item?.unique_id || '').trim().toLowerCase();
+      const itemName = String(item?.name || '').trim().toLowerCase();
+      return itemUniqueId === expectedUniqueId || (!itemUniqueId && itemName === expectedName);
     });
-    return response.data;
-  } catch (error) {
-    throw translateAxiosError(error, `localização do usuário ${description}`);
+    if (holder) return holder;
+    if (items.length < pageSize) break;
   }
+
+  throw new WiredServiceError(
+    `O usuário ${username || uniqueId} não consta na variável ` +
+      `"${variableName}" do quarto.`,
+    404,
+    'wired.variables.entity_not_found',
+  );
 }
 
 async function patchUserVariablesProfile(userId, variables) {
@@ -292,8 +306,7 @@ async function incrementGlobalVariable(variableName) {
 
 module.exports = {
   WiredServiceError,
-  findUserVariablesProfileByName,
-  findUserVariablesProfileByUniqueId,
+  findUserVariableHolder,
   getGlobalVariable,
   incrementGlobalVariable,
   listRoomVariables,

@@ -51,6 +51,7 @@ Copie `.env.example` para `.env` e preencha:
 | `WIRED_GAME_VARIABLE` | Nome da variável global que seleciona o jogo (`jogo`) |
 | `WIRED_GAME_STATUS_VARIABLE` | Nome da variável global de início/parada (`status_jogo`) |
 | `WIRED_MOVE_USER_VARIABLE` | Nome da variável de usuário usada pelo controle Mover usuário (`mover_usuario`) |
+| `WIRED_ROOM_USER_VARIABLE` | Variável usada para localizar os usuários presentes no quarto (`usuario_no_quarto`) |
 
 ---
 
