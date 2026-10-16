@@ -69,27 +69,6 @@ function translateAxiosError(error, action) {
     );
   }
   if (status === 404) {
-    if (wiredCode === 'wired.variables.not_found') {
-      return new WiredServiceError(
-        `A variável Wired não está configurada no quarto durante a ${action}.`,
-        404,
-        wiredCode,
-      );
-    }
-    if (wiredCode === 'wired.variables.entity_not_found') {
-      return new WiredServiceError(
-        `O alvo Wired não foi encontrado no quarto durante a ${action}.`,
-        404,
-        wiredCode,
-      );
-    }
-    if (wiredCode === 'room.not_found') {
-      return new WiredServiceError(
-        `O quarto configurado não foi encontrado durante a ${action}.`,
-        404,
-        wiredCode,
-      );
-    }
     return new WiredServiceError(
       `O quarto, a variável ou o alvo não foi encontrado durante a ${action}.`,
       404,

@@ -58,9 +58,6 @@ Habbo da sessão e confirma nele a variável `usuario_no_quarto`. Com o ID
 numérico interno do perfil, define `mover_usuario` como `0` (prova), `1` (Resta 1), `2`
 (fora) ou `3` (hall do elenco). Os nomes podem ser personalizados no Railway
 com `WIRED_ROOM_USER_VARIABLE` e `WIRED_MOVE_USER_VARIABLE`.
-As duas variáveis precisam estar cadastradas como variáveis de usuário no
-complemento Web API do quarto; a aplicação atribui o valor, mas não cria a
-definição Wired.
 
 Os nomes podem ser personalizados no Railway com `WIRED_ONE_WAY_VARIABLE` e
 `WIRED_LIVES_VARIABLE`. As vidas usam diretamente perfis de floor furni do
