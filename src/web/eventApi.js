@@ -128,7 +128,11 @@ router.post('/controls/teleport-game', requireSession({ renew: true }), async (r
 
 router.post('/controls/move-user', requireSession({ renew: true }), async (req, res) => {
   try {
-    const result = await setMoveUser(req.eventSession.habbo_unique_id, req.body?.value);
+    const result = await setMoveUser(
+      req.eventSession.habbo_unique_id,
+      req.eventSession.habbo_username,
+      req.body?.value,
+    );
     return res.json({ ok: true, ...result });
   } catch (error) {
     return sendError(res, error);

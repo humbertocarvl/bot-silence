@@ -57,7 +57,9 @@ O ícone **Mover usuário** usa o ID único `hh...` do Habbo vinculado à sessã
 ativa para localizar seu ID numérico interno no quarto. Em seguida, define a
 variável de usuário `mover_usuario` como `0` (prova), `1` (Resta 1), `2` (fora)
 ou `3` (hall do elenco). Esse nome pode ser personalizado no Railway com
-`WIRED_MOVE_USER_VARIABLE`.
+`WIRED_MOVE_USER_VARIABLE`. O usuário precisa estar participando do quarto do
+evento para que a API consiga resolver seu ID interno. Em versões da API que
+não resolvem `unique_id`, o painel tenta o nick autenticado como compatibilidade.
 
 Os nomes podem ser personalizados no Railway com `WIRED_ONE_WAY_VARIABLE` e
 `WIRED_LIVES_VARIABLE`. As vidas usam diretamente perfis de floor furni do

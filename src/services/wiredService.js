@@ -54,6 +54,13 @@ function translateAxiosError(error, action) {
   if (status === 429) {
     return new WiredServiceError('O limite de requisições Wired foi atingido.', 429, wiredCode);
   }
+  if (status === 403 && wiredCode === 'wired.variables.user_not_participating') {
+    return new WiredServiceError(
+      'O usuário não está participando do quarto do evento. Entre no quarto e tente novamente.',
+      403,
+      wiredCode,
+    );
+  }
   if (status === 401 || status === 403) {
     return new WiredServiceError(
       'A API Wired recusou a operação. Verifique as chaves e se a API está habilitada.',
@@ -193,20 +200,33 @@ async function patchFurniVariablesProfile(targetKind, furniId, variables) {
 }
 
 async function findUserVariablesProfileByUniqueId(uniqueId) {
-  const readKey = requireEnv('HABBO_WIRED_READ_KEY');
   if (typeof uniqueId !== 'string' || !/^hh/i.test(uniqueId.trim())) {
     throw new WiredServiceError('O ID único do usuário Wired é inválido.', 400);
   }
 
+  return findUserVariablesProfile({ unique_id: uniqueId.trim() }, uniqueId);
+}
+
+async function findUserVariablesProfileByName(username) {
+  if (typeof username !== 'string' || !username.trim()) {
+    throw new WiredServiceError('O nome do usuário Wired é inválido.', 400);
+  }
+
+  return findUserVariablesProfile({ name: username.trim() }, username);
+}
+
+async function findUserVariablesProfile(params, description) {
+  const readKey = requireEnv('HABBO_WIRED_READ_KEY');
+
   const url = `${getWiredBaseUrl()}/rooms/${getRoomId()}/variables_profile/user/users`;
   try {
     const response = await wiredHttp.get(url, {
-      params: { unique_id: uniqueId.trim() },
+      params,
       headers: { 'X-Wired-Read-Key': readKey },
     });
     return response.data;
   } catch (error) {
-    throw translateAxiosError(error, `localização do usuário ${uniqueId}`);
+    throw translateAxiosError(error, `localização do usuário ${description}`);
   }
 }
 
@@ -272,6 +292,7 @@ async function incrementGlobalVariable(variableName) {
 
 module.exports = {
   WiredServiceError,
+  findUserVariablesProfileByName,
   findUserVariablesProfileByUniqueId,
   getGlobalVariable,
   incrementGlobalVariable,

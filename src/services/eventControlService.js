@@ -1,5 +1,6 @@
 const { EventAccessError } = require('./eventAccessService');
 const {
+  findUserVariablesProfileByName,
   findUserVariablesProfileByUniqueId,
   listRoomVariables,
   patchFurniVariablesProfile,
@@ -60,7 +61,7 @@ async function setTeleportGame(value) {
   return setGlobalControl('tj', value);
 }
 
-async function setMoveUser(habboUniqueId, value) {
+async function setMoveUser(habboUniqueId, habboUsername, value) {
   validateIntegerOption(
     value,
     3,
@@ -77,7 +78,28 @@ async function setMoveUser(habboUniqueId, value) {
 
   const variableName = process.env.WIRED_MOVE_USER_VARIABLE?.trim() || 'mover_usuario';
   const startedAt = Date.now();
-  const profile = await findUserVariablesProfileByUniqueId(habboUniqueId);
+  let profile;
+  try {
+    profile = await findUserVariablesProfileByUniqueId(habboUniqueId);
+  } catch (error) {
+    if (!(error instanceof WiredServiceError) || error.status !== 404) throw error;
+    if (error.details === 'room.not_found') throw error;
+
+    try {
+      profile = await findUserVariablesProfileByName(habboUsername);
+    } catch (fallbackError) {
+      if (!(fallbackError instanceof WiredServiceError) || fallbackError.status !== 404) {
+        throw fallbackError;
+      }
+      if (fallbackError.details === 'room.not_found') throw fallbackError;
+      throw new WiredServiceError(
+        `O usuário ${habboUsername} não foi encontrado no quarto configurado. ` +
+          'Entre no quarto do evento e tente novamente.',
+        404,
+        fallbackError.details || error.details || 'wired.variables.entity_not_found',
+      );
+    }
+  }
   const userId = profile?.user?.id;
   if (!Number.isInteger(userId) || userId < 0) {
     throw new WiredServiceError(
