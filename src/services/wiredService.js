@@ -75,7 +75,23 @@ function translateAxiosError(error, action) {
       wiredCode,
     );
   }
-  return new WiredServiceError('Não foi possível comunicar com a API Wired.', 502, wiredCode);
+  if (status) {
+    const suffix = wiredCode ? `: ${wiredCode}` : '';
+    return new WiredServiceError(
+      `A API Wired recusou a ${action} (HTTP ${status}${suffix}).`,
+      status >= 500 ? 502 : status,
+      error.response?.data || wiredCode,
+    );
+  }
+  if (error.code === 'ECONNABORTED') {
+    return new WiredServiceError('A API Wired excedeu o tempo limite da requisição.', 504);
+  }
+  const networkCode = error.code ? ` (${error.code})` : '';
+  return new WiredServiceError(
+    `Não foi possível comunicar com a API Wired${networkCode}.`,
+    502,
+    error.code || null,
+  );
 }
 
 async function getGlobalVariable(variableName) {
@@ -215,7 +231,8 @@ async function findUserVariableHolder(variableName, uniqueId, username) {
     lookups.push({ name: username.trim() });
   }
 
-  for (const params of lookups) {
+  for (let lookupIndex = 0; lookupIndex < lookups.length; lookupIndex += 1) {
+    const params = lookups[lookupIndex];
     let response;
     try {
       response = await wiredHttp.get(url, {
@@ -224,8 +241,11 @@ async function findUserVariableHolder(variableName, uniqueId, username) {
       });
     } catch (error) {
       // O nome serve como segunda forma de localizar o mesmo perfil quando o
-      // unique_id salvo na vinculação estiver desatualizado.
-      if (error.response?.status === 404) continue;
+      // unique_id salvo na vinculação estiver desatualizado ou for rejeitado.
+      const canTryName =
+        lookupIndex < lookups.length - 1 &&
+        [400, 404].includes(error.response?.status);
+      if (canTryName || error.response?.status === 404) continue;
       throw translateAxiosError(error, `leitura do perfil de ${username || uniqueId}`);
     }
 
