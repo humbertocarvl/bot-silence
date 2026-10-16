@@ -353,6 +353,38 @@ async function patchUserVariablesProfile(userId, variables) {
   }
 }
 
+async function setUserVariable(variableName, userId, value) {
+  const writeKey = requireEnv('HABBO_WIRED_WRITE_KEY');
+  if (typeof variableName !== 'string' || !variableName.trim()) {
+    throw new WiredServiceError('O nome da variável de usuário é inválido.', 400);
+  }
+  if (!/^\d+$/.test(String(userId))) {
+    throw new WiredServiceError('O ID interno do usuário Wired é inválido.', 400);
+  }
+  if (!/^-?\d+$/.test(String(value))) {
+    throw new WiredServiceError('O valor da variável de usuário é inválido.', 400);
+  }
+
+  const url =
+    `${getWiredBaseUrl()}/rooms/${getRoomId()}/variables/user/` +
+    `${encodeURIComponent(variableName.trim())}/users/${encodeURIComponent(String(userId))}`;
+  try {
+    const response = await wiredHttp.put(
+      url,
+      { value: String(value) },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Wired-Write-Key': writeKey,
+        },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    throw translateAxiosError(error, `atribuição da variável ${variableName}`);
+  }
+}
+
 async function incrementGlobalVariable(variableName) {
   const current = await getGlobalVariable(variableName);
   if (!/^-?\d+$/.test(String(current?.value))) {
@@ -386,4 +418,5 @@ module.exports = {
   patchGlobalVariables,
   patchUserVariablesProfile,
   setGlobalVariable,
+  setUserVariable,
 };

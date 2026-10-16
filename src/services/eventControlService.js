@@ -3,8 +3,8 @@ const {
   findUserVariableHolder,
   listRoomVariables,
   patchFurniVariablesProfile,
-  patchUserVariablesProfile,
   setGlobalVariable,
+  setUserVariable,
   WiredServiceError,
 } = require('./wiredService');
 
@@ -92,7 +92,7 @@ async function setMoveUser(habboUniqueId, habboUsername, value) {
       'wired.variables.invalid_user_profile',
     );
   }
-  await patchUserVariablesProfile(userId, { [variableName]: value });
+  await setUserVariable(variableName, userId, value);
   return {
     value,
     user_unique_id: habboUniqueId,
